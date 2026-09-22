@@ -30,4 +30,34 @@ class AuthRepository {
 
     return Usuario.fromJson(dados['usuario'] as Map<String, dynamic>);
   }
+
+  Future<void> cadastrarUsuario({
+    required String nome,
+    required String email,
+    required String senha,
+  }) {
+    return _api.post('/cadastrar-usuario', {
+      'nome': nome,
+      'email': email,
+      'senha': senha,
+    });
+  }
+
+  Future<void> cadastrarProfissional({
+    required String nome,
+    required String email,
+    required String senha,
+    required String profissao,
+    required String registro,
+    required String ufRegistro,
+  }) {
+    return _api.post('/cadastrar-profissional', {
+      'nome': nome,
+      'email': email,
+      'senha': senha,
+      'profissao': profissao,
+      'registro': registro,
+      'uf_registro': ufRegistro,
+    });
+  }
 }

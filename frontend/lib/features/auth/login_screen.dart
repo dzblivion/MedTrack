@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import '../../core/api/api_client.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_button.dart';
+import '../../widgets/app_logo.dart';
 import '../../widgets/app_snackbar.dart';
 import '../../widgets/app_text_field.dart';
 import '../home/home_screen.dart';
 import 'auth_repository.dart';
+import 'cadastro_screen.dart';
 import 'auth_validators.dart';
 import 'widgets/auth_layout.dart';
 
@@ -68,6 +70,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return AuthLayout(
       titulo: 'Bem-vindo de volta!',
       subtitulo: 'Continue acompanhando seu cuidado.',
+      marcaCabecalho: const AppLogo(),
       child: Form(
         key: _formKey,
         child: Column(
@@ -111,7 +114,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 _LinkTexto(
                   texto: 'Criar Conta',
                   negrito: true,
-                  onTap: _emBreve,
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const CadastroScreen()),
+                  ),
                 ),
               ],
             ),

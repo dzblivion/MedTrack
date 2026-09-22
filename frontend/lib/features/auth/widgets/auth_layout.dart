@@ -3,11 +3,19 @@ import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
 
 /// Estrutura comum das telas de autenticação: cabeçalho teal + painel branco.
+///
+/// Quando o conteúdo cabe na tela, o painel preenche o espaço restante
+/// (como no login). Quando não cabe (ex.: cadastro de profissional, com
+/// mais campos), a tela rola em vez de estourar.
 class AuthLayout extends StatelessWidget {
   final String titulo;
   final String subtitulo;
   final double alturaCabecalho;
   final Widget child;
+
+  /// Conteúdo opcional exibido no espaço vazio do cabeçalho (ex.: a marca
+  /// do app no login). Fica centralizado abaixo do subtítulo.
+  final Widget? marcaCabecalho;
 
   const AuthLayout({
     super.key,
@@ -15,30 +23,36 @@ class AuthLayout extends StatelessWidget {
     required this.subtitulo,
     required this.child,
     this.alturaCabecalho = 0.39,
+    this.marcaCabecalho,
   });
 
   @override
   Widget build(BuildContext context) {
-    final alturaTela = MediaQuery.sizeOf(context).height;
-
     return Scaffold(
       backgroundColor: AppColors.ciano,
-      body: CustomScrollView(
-        slivers: [
-          SliverFillRemaining(
-            hasScrollBody: false,
-            child: Column(
-              children: [
-                _Cabecalho(
-                  titulo: titulo,
-                  subtitulo: subtitulo,
-                  altura: alturaTela * alturaCabecalho,
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Column(
+                    children: [
+                      _Cabecalho(
+                        titulo: titulo,
+                        subtitulo: subtitulo,
+                        altura: constraints.maxHeight * alturaCabecalho,
+                        marca: marcaCabecalho,
+                      ),
+                      Expanded(child: _Painel(child: child)),
+                    ],
+                  ),
                 ),
-                Expanded(child: _Painel(child: child)),
-              ],
-            ),
-          ),
-        ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -48,11 +62,13 @@ class _Cabecalho extends StatelessWidget {
   final String titulo;
   final String subtitulo;
   final double altura;
+  final Widget? marca;
 
   const _Cabecalho({
     required this.titulo,
     required this.subtitulo,
     required this.altura,
+    this.marca,
   });
 
   @override
@@ -60,32 +76,30 @@ class _Cabecalho extends StatelessWidget {
     return SizedBox(
       height: altura,
       width: double.infinity,
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 32, 24, 0),
-          child: Column(
-            children: [
-              Text(
-                titulo,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 32, 24, 0),
+        child: Column(
+          children: [
+            if (marca != null) ...[marca!, const SizedBox(height: 28)],
+            Text(
+              titulo,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 28,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 4),
+            SizedBox(
+              width: 210,
+              child: Text(
+                subtitulo,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 28,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: const TextStyle(color: Colors.white, fontSize: 14),
               ),
-              const SizedBox(height: 4),
-              SizedBox(
-                width: 210,
-                child: Text(
-                  subtitulo,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.white, fontSize: 14),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
