@@ -2,33 +2,38 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
 
-/// Marca "MedTrack" em duas cores, usada no splash e no espaço vazio
-/// do cabeçalho do login.
+/// Marca "MedTrack" em duas cores.
+///
+/// [claro] controla a variante: `false` (padrão) é pensada para fundo teal
+/// sólido, como no login; `true` é pensada para fundo claro, como no splash.
 class AppLogo extends StatelessWidget {
-  const AppLogo({super.key});
+  final bool claro;
+
+  const AppLogo({super.key, this.claro = false});
 
   @override
   Widget build(BuildContext context) {
+    final corMed = claro ? AppColors.darkCiano : Colors.white;
+    final corTrack = claro ? AppColors.ciano : AppColors.cianoClaro;
+    final corTagline = claro ? AppColors.gray : Colors.white70;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         RichText(
-          text: const TextSpan(
-            style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800),
+          text: TextSpan(
+            style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w800),
             children: [
-              TextSpan(text: 'Med', style: TextStyle(color: Colors.white)),
-              TextSpan(
-                text: 'Track',
-                style: TextStyle(color: AppColors.cianoClaro),
-              ),
+              TextSpan(text: 'Med', style: TextStyle(color: corMed)),
+              TextSpan(text: 'Track', style: TextStyle(color: corTrack)),
             ],
           ),
         ),
         const SizedBox(height: 4),
-        const Text(
+        Text(
           'SEU TRATAMENTO, NO SEU RITMO.',
           style: TextStyle(
-            color: Colors.white70,
+            color: corTagline,
             fontSize: 9,
             fontWeight: FontWeight.w600,
             letterSpacing: 1.1,

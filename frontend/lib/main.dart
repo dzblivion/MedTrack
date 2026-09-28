@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'features/auth/login_screen.dart';
+import 'features/splash/splash_screen.dart';
 import 'theme/app_theme.dart';
 
 void main() {
@@ -15,7 +15,7 @@ class MedTrackApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'MedTrack',
       theme: AppTheme.lightTheme,
-      home: const LoginScreen(),
+      home: const SplashScreen(),
     );
   }
 }
