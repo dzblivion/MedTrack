@@ -9,6 +9,7 @@ import '../../widgets/app_text_field.dart';
 import 'auth_repository.dart';
 import 'auth_validators.dart';
 import 'br_estados.dart';
+import 'login_screen.dart';
 import 'profissoes_saude.dart';
 import 'widgets/auth_layout.dart';
 import 'widgets/terms_checkbox.dart';
@@ -50,6 +51,18 @@ class _CadastroScreenState extends State<CadastroScreen> {
 
   bool get _ehProfissional => _tipo == TipoConta.profissional;
 
+  // Vindo da Splash, o cadastro é a única tela da pilha: não há o que desempilhar.
+  void _irParaLogin() {
+    final navegador = Navigator.of(context);
+    if (navegador.canPop()) {
+      navegador.pop();
+    } else {
+      navegador.pushReplacement(
+        MaterialPageRoute(builder: (_) => LoginScreen(authRepository: _auth)),
+      );
+    }
+  }
+
   Future<void> _criarConta() async {
     final formValido = _formKey.currentState!.validate();
 
@@ -82,7 +95,7 @@ class _CadastroScreenState extends State<CadastroScreen> {
       if (!mounted) return;
 
       AppSnackBar.info(context, 'Conta criada com sucesso! Faça login.');
-      Navigator.of(context).pop();
+      _irParaLogin();
     } on ApiException catch (e) {
       if (mounted) AppSnackBar.erro(context, e.mensagem);
     } catch (_) {
@@ -220,7 +233,7 @@ class _CadastroScreenState extends State<CadastroScreen> {
                   style: TextStyle(color: AppColors.gray, fontSize: 10),
                 ),
                 InkWell(
-                  onTap: () => Navigator.of(context).pop(),
+                  onTap: _irParaLogin,
                   child: const Text(
                     'Entrar',
                     style: TextStyle(

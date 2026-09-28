@@ -143,6 +143,36 @@ void main() {
     expect(find.text('abrir'), findsOneWidget);
   });
 
+  testWidgets('sem tela por baixo, o cadastro concluído abre o login', (
+    tester,
+  ) async {
+    // Largura maior: o login ao final não cabe em 390 px com a fonte de teste.
+    await tester.binding.setSurfaceSize(const Size(800, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final auth = _AuthFake();
+    await tester.pumpWidget(
+      MaterialApp(home: CadastroScreen(authRepository: auth)),
+    );
+
+    await tester.enterText(find.byType(TextFormField).at(0), 'Maria');
+    await tester.enterText(find.byType(TextFormField).at(1), 'm@m.com');
+    await tester.enterText(find.byType(TextFormField).at(2), '12345678');
+    await tester.enterText(find.byType(TextFormField).at(3), '12345678');
+
+    final checkbox = find.byType(Checkbox);
+    await tester.ensureVisible(checkbox);
+    await tester.tap(checkbox);
+
+    final botao = find.text('Criar minha conta');
+    await tester.ensureVisible(botao);
+    await tester.tap(botao);
+    await tester.pumpAndSettle();
+
+    expect(auth.chamouUsuario, isTrue);
+    expect(find.text('Bem-vindo de volta!'), findsOneWidget);
+  });
+
   testWidgets('cadastra profissional com os campos extras', (tester) async {
     final auth = _AuthFake();
     await abrirCadastro(tester, auth);
