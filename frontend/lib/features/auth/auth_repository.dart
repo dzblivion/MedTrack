@@ -60,4 +60,29 @@ class AuthRepository {
       'uf_registro': ufRegistro,
     });
   }
+
+  // O backend envia o e-mail pelo Gmail antes de responder, o que passa de 10 s.
+  Future<void> solicitarCodigo(String email) {
+    return _api.post(
+      '/recuperar-senha',
+      {'email': email},
+      timeout: const Duration(seconds: 30),
+    );
+  }
+
+  Future<void> verificarCodigo(String email, String codigo) {
+    return _api.post('/verificar-codigo', {'email': email, 'codigo': codigo});
+  }
+
+  Future<void> redefinirSenha({
+    required String email,
+    required String codigo,
+    required String novaSenha,
+  }) {
+    return _api.post('/redefinir-senha', {
+      'email': email,
+      'codigo': codigo,
+      'nova_senha': novaSenha,
+    });
+  }
 }

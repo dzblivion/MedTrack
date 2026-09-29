@@ -18,6 +18,13 @@ class AuthValidators {
 
   static String? nome(String? valor) => campoObrigatorio(valor, 'seu nome');
 
+  static String? codigo(String? valor) {
+    final codigo = valor?.trim() ?? '';
+    if (codigo.isEmpty) return 'Informe o código';
+    if (codigo.length != 6) return 'O código tem 6 dígitos';
+    return null;
+  }
+
   static String? novaSenha(String? valor) {
     if (valor == null || valor.isEmpty) return 'Crie uma senha';
     if (valor.length < 8) return 'A senha deve ter ao menos 8 caracteres';

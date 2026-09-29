@@ -8,9 +8,11 @@ import '../../widgets/app_snackbar.dart';
 import '../../widgets/app_text_field.dart';
 import '../home/home_screen.dart';
 import 'auth_repository.dart';
-import 'cadastro_screen.dart';
 import 'auth_validators.dart';
+import 'cadastro_screen.dart';
+import 'recuperar_senha/solicitar_codigo_screen.dart';
 import 'widgets/auth_layout.dart';
+import 'widgets/auth_link.dart';
 
 class LoginScreen extends StatefulWidget {
   final AuthRepository? authRepository;
@@ -63,7 +65,16 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  void _emBreve() => AppSnackBar.info(context, 'Tela em construção.');
+  void _esqueciSenha() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => SolicitarCodigoScreen(
+          authRepository: _auth,
+          emailInicial: _emailController.text.trim(),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -95,7 +106,7 @@ class _LoginScreenState extends State<LoginScreen> {
               onFieldSubmitted: (_) => _entrar(),
             ),
             const SizedBox(height: 20),
-            _LinkTexto(texto: 'Esqueci minha senha', onTap: _emBreve),
+            AuthLink(texto: 'Esqueci minha senha', onTap: _esqueciSenha),
             const Spacer(),
             const SizedBox(height: 24),
             AppButton(
@@ -111,7 +122,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   'Ainda não tem uma conta? ',
                   style: TextStyle(color: AppColors.gray, fontSize: 10),
                 ),
-                _LinkTexto(
+                AuthLink(
                   texto: 'Criar Conta',
                   negrito: true,
                   onTap: () => Navigator.of(context).push(
@@ -121,34 +132,6 @@ class _LoginScreenState extends State<LoginScreen> {
               ],
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _LinkTexto extends StatelessWidget {
-  final String texto;
-  final VoidCallback onTap;
-  final bool negrito;
-
-  const _LinkTexto({
-    required this.texto,
-    required this.onTap,
-    this.negrito = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Text(
-        texto,
-        style: TextStyle(
-          color: AppColors.gray,
-          fontSize: 10,
-          fontWeight: negrito ? FontWeight.w700 : FontWeight.w600,
-          decoration: TextDecoration.underline,
         ),
       ),
     );
