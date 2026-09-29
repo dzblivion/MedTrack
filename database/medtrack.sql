@@ -110,7 +110,7 @@ CREATE TABLE `profissionais` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_profissionais_usuario` (`usuario_id`),
   CONSTRAINT `fk_profissionais_usuario` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -119,7 +119,40 @@ CREATE TABLE `profissionais` (
 
 LOCK TABLES `profissionais` WRITE;
 /*!40000 ALTER TABLE `profissionais` DISABLE KEYS */;
+INSERT INTO `profissionais` VALUES (1,2,'Médico','123456','PE');
 /*!40000 ALTER TABLE `profissionais` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `recuperacoes_senha`
+--
+
+DROP TABLE IF EXISTS `recuperacoes_senha`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `recuperacoes_senha` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `usuario_id` int unsigned NOT NULL,
+  `codigo` char(64) NOT NULL,
+  `expira_em` bigint NOT NULL,
+  `verificado` tinyint(1) NOT NULL DEFAULT '0',
+  `criado_em` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `usado_em` datetime DEFAULT NULL,
+  `tentativas` tinyint unsigned NOT NULL DEFAULT '0',
+  `bloqueado_em` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_recuperacoes_senha_usuario_id` (`usuario_id`,`id`),
+  CONSTRAINT `fk_recuperacoes_usuario` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `recuperacoes_senha`
+--
+
+LOCK TABLES `recuperacoes_senha` WRITE;
+/*!40000 ALTER TABLE `recuperacoes_senha` DISABLE KEYS */;
+/*!40000 ALTER TABLE `recuperacoes_senha` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -202,7 +235,7 @@ CREATE TABLE `usuarios` (
   `criado_em` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_usuarios_email` (`email`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -211,6 +244,7 @@ CREATE TABLE `usuarios` (
 
 LOCK TABLES `usuarios` WRITE;
 /*!40000 ALTER TABLE `usuarios` DISABLE KEYS */;
+INSERT INTO `usuarios` VALUES (2,'Dr. João Silva','joao.silva@email.com','$2b$12$V5HTzZTvg2XNwJ3UidnHheCP9CxLx5j2Jut52P.aNvn5MJu1V8KE2','2026-09-13 22:20:56'),(3,'Cecilia','dsgncece@gmail.com','$2b$12$90w5KJGN.rDlbMwTrJPCku2LGlIYc.wS0mrRlRylFL7t7XH/lJfva','2026-09-15 14:13:22');
 /*!40000 ALTER TABLE `usuarios` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -223,4 +257,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-09-11 16:21:35
+-- Dump completed on 2026-09-29 11:41:18

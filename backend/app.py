@@ -5,6 +5,7 @@ from config.mail import mail
 from dotenv import load_dotenv
 from flask import Flask
 from flask_cors import CORS
+from routes.tratamento import tratamento
 from routes.usuario import usuario
 
 load_dotenv()
@@ -21,6 +22,7 @@ app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")
 mail.init_app(app)
 
 app.register_blueprint(usuario)
+app.register_blueprint(tratamento)
 
 
 @app.route('/')
@@ -31,4 +33,4 @@ def home():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False)
