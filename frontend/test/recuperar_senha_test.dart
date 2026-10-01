@@ -103,18 +103,19 @@ void main() {
     );
   });
 
-  testWidgets('mostra o erro quando o e-mail não existe', (tester) async {
+  testWidgets('mostra o erro quando o servidor falha ao pedir o código', (
+    tester,
+  ) async {
+    const mensagem = 'Não foi possível processar a recuperação de senha!';
     await _abrir(
       tester,
-      _AuthFake(
-        erroSolicitar: const ApiException('E-mail não encontrado!', 404),
-      ),
+      _AuthFake(erroSolicitar: const ApiException(mensagem, 500)),
     );
 
     await tester.enterText(find.byType(TextFormField), 'x@x.com');
     await _tocar(tester, 'Enviar código');
 
-    expect(find.text('E-mail não encontrado!'), findsOneWidget);
+    expect(find.text(mensagem), findsOneWidget);
     expect(find.text('Confirmar código'), findsNothing);
   });
 

@@ -61,13 +61,8 @@ class AuthRepository {
     });
   }
 
-  // O backend envia o e-mail pelo Gmail antes de responder, o que passa de 10 s.
   Future<void> solicitarCodigo(String email) {
-    return _api.post(
-      '/recuperar-senha',
-      {'email': email},
-      timeout: const Duration(seconds: 30),
-    );
+    return _api.post('/recuperar-senha', {'email': email});
   }
 
   Future<void> verificarCodigo(String email, String codigo) {

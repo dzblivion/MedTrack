@@ -101,7 +101,7 @@ class _VerificarCodigoScreenState extends State<VerificarCodigoScreen> {
               TextSpan(
                 style: const TextStyle(color: AppColors.gray, fontSize: 11),
                 children: [
-                  const TextSpan(text: 'Código enviado para '),
+                  const TextSpan(text: 'Se houver uma conta com '),
                   TextSpan(
                     text: widget.email,
                     style: const TextStyle(
@@ -109,6 +109,7 @@ class _VerificarCodigoScreenState extends State<VerificarCodigoScreen> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
+                  const TextSpan(text: ', enviamos um código para ele.'),
                 ],
               ),
             ),
