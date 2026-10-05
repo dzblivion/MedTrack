@@ -12,5 +12,4 @@ COPY . .
 
 EXPOSE 5000
 
-# O app.run() do app.py só escuta em 127.0.0.1, inacessível de fora do container.
-CMD ["flask", "--app", "app", "run", "--host", "0.0.0.0", "--port", "5000"]
+CMD ["python", "app.py"]

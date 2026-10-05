@@ -42,4 +42,5 @@ O app Flutter já aponta para `localhost:5000` (navegador e Windows) e `10.0.2.2
 ### Banco de dados
 - Os arquivos `.sql` de `database/` só rodam **na primeira vez** que o banco é criado. Depois de alterar a estrutura, rode `docker compose down -v` e suba de novo (os dados de teste são apagados).
 - Para abrir o banco num cliente como o MySQL Workbench: host `127.0.0.1`, porta `3307`, usuário `medtrack`, senha `medtrack`.
+- Para rodar a API pelo Python (`python app.py`, fora do Docker) usando esse banco, coloque no `backend/.env`: `DB_HOST=127.0.0.1`, `DB_PORT=3307`, `DB_USER=medtrack`, `DB_PASSWORD=medtrack`. Antes, pare o container da API com `docker compose stop api`, porque os dois usam a porta 5000.
 - Essas credenciais são só do ambiente local de desenvolvimento.
