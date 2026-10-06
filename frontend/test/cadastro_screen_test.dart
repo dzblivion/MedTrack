@@ -1,67 +1,44 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:frontend/features/auth/auth_repository.dart';
-import 'package:frontend/features/auth/cadastro_screen.dart';
+import 'package:frontend/app/rotas.dart';
 
-class _AuthFake extends AuthRepository {
-  bool chamouUsuario = false;
-  bool chamouProfissional = false;
-
-  @override
-  Future<void> cadastrarUsuario({
-    required String nome,
-    required String email,
-    required String senha,
-  }) async {
-    chamouUsuario = true;
-  }
-
-  @override
-  Future<void> cadastrarProfissional({
-    required String nome,
-    required String email,
-    required String senha,
-    required String profissao,
-    required String registro,
-    required String ufRegistro,
-  }) async {
-    chamouProfissional = true;
-  }
-}
+import 'helpers.dart';
 
 void main() {
-  Future<void> abrirCadastro(WidgetTester tester, AuthRepository auth) async {
-    // Tamanho de um iPhone comum, para testar a rolagem em condição real
-    // (o modo profissional tem campos demais para caber numa tela só).
-    await tester.binding.setSurfaceSize(const Size(390, 844));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
+  // Tamanho de um iPhone comum, para testar a rolagem em condição real
+  // (o modo profissional tem campos demais para caber numa tela só).
+  // Testes que terminam no login usam o tamanho padrão: a linha
+  // "Ainda não tem uma conta?" não cabe em 390 px com a fonte larga dos testes.
+  Future<void> abrirCadastro(
+    WidgetTester tester,
+    AuthFake auth, {
+    bool tamanhoCelular = true,
+  }) async {
+    if (tamanhoCelular) {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+    }
+    await abrirApp(tester, auth: auth, rota: Rotas.cadastro);
+  }
 
-    await tester.pumpWidget(MaterialApp(
-      home: Builder(
-        builder: (context) => Scaffold(
-          body: Center(
-            child: ElevatedButton(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => CadastroScreen(authRepository: auth),
-                ),
-              ),
-              child: const Text('abrir'),
-            ),
-          ),
-        ),
-      ),
-    ));
+  Future<void> preencherUsuario(WidgetTester tester) async {
+    await tester.enterText(find.byType(TextFormField).at(0), 'Maria');
+    await tester.enterText(find.byType(TextFormField).at(1), 'm@m.com');
+    await tester.enterText(find.byType(TextFormField).at(2), '12345678');
+    await tester.enterText(find.byType(TextFormField).at(3), '12345678');
+  }
 
-    await tester.tap(find.text('abrir'));
-    await tester.pumpAndSettle();
+  Future<void> aceitarTermos(WidgetTester tester) async {
+    final checkbox = find.byType(Checkbox);
+    await tester.ensureVisible(checkbox);
+    await tester.tap(checkbox);
   }
 
   testWidgets('mostra os campos básicos e esconde os de profissional', (
     tester,
   ) async {
-    await abrirCadastro(tester, _AuthFake());
+    await abrirCadastro(tester, AuthFake());
 
     expect(find.text('Nome completo'), findsOneWidget);
     expect(find.text('E-mail'), findsOneWidget);
@@ -74,10 +51,9 @@ void main() {
   testWidgets('alternar para Profissional revela os campos extras', (
     tester,
   ) async {
-    await abrirCadastro(tester, _AuthFake());
+    await abrirCadastro(tester, AuthFake());
 
-    await tester.tap(find.text('Profissional'));
-    await tester.pumpAndSettle();
+    await tocar(tester, 'Profissional');
 
     expect(find.text('Profissão'), findsOneWidget);
     expect(find.text('Número do registro'), findsOneWidget);
@@ -85,18 +61,11 @@ void main() {
   });
 
   testWidgets('não envia se os termos não foram aceitos', (tester) async {
-    final auth = _AuthFake();
+    final auth = AuthFake();
     await abrirCadastro(tester, auth);
 
-    await tester.enterText(find.byType(TextFormField).at(0), 'Maria');
-    await tester.enterText(find.byType(TextFormField).at(1), 'm@m.com');
-    await tester.enterText(find.byType(TextFormField).at(2), '12345678');
-    await tester.enterText(find.byType(TextFormField).at(3), '12345678');
-
-    final botao = find.text('Criar minha conta');
-    await tester.ensureVisible(botao);
-    await tester.tap(botao);
-    await tester.pump();
+    await preencherUsuario(tester);
+    await tocar(tester, 'Criar minha conta');
 
     expect(auth.chamouUsuario, isFalse);
     expect(
@@ -106,79 +75,45 @@ void main() {
   });
 
   testWidgets('acusa senhas diferentes', (tester) async {
-    await abrirCadastro(tester, _AuthFake());
+    await abrirCadastro(tester, AuthFake());
 
     await tester.enterText(find.byType(TextFormField).at(2), '12345678');
     await tester.enterText(find.byType(TextFormField).at(3), 'outraSenha');
-
-    final botao = find.text('Criar minha conta');
-    await tester.ensureVisible(botao);
-    await tester.tap(botao);
-    await tester.pump();
+    await tocar(tester, 'Criar minha conta');
 
     expect(find.text('As senhas não coincidem'), findsOneWidget);
   });
 
-  testWidgets('cadastra usuário comum e volta para a tela anterior', (
-    tester,
-  ) async {
-    final auth = _AuthFake();
-    await abrirCadastro(tester, auth);
+  testWidgets('cadastra usuário comum e abre o login', (tester) async {
+    final auth = AuthFake();
+    await abrirCadastro(tester, auth, tamanhoCelular: false);
 
-    await tester.enterText(find.byType(TextFormField).at(0), 'Maria');
-    await tester.enterText(find.byType(TextFormField).at(1), 'm@m.com');
-    await tester.enterText(find.byType(TextFormField).at(2), '12345678');
-    await tester.enterText(find.byType(TextFormField).at(3), '12345678');
-
-    final checkbox = find.byType(Checkbox);
-    await tester.ensureVisible(checkbox);
-    await tester.tap(checkbox);
-
-    final botao = find.text('Criar minha conta');
-    await tester.ensureVisible(botao);
-    await tester.tap(botao);
-    await tester.pumpAndSettle();
+    await preencherUsuario(tester);
+    await aceitarTermos(tester);
+    await tocar(tester, 'Criar minha conta');
 
     expect(auth.chamouUsuario, isTrue);
-    expect(find.text('abrir'), findsOneWidget);
+    expect(find.text('Bem-vindo de volta!'), findsOneWidget);
+    expect(find.text('Conta criada com sucesso! Faça login.'), findsOneWidget);
   });
 
-  testWidgets('sem tela por baixo, o cadastro concluído abre o login', (
+  testWidgets('pelo login, Criar Conta e depois Entrar volta ao login', (
     tester,
   ) async {
-    // Largura maior: o login ao final não cabe em 390 px com a fonte de teste.
-    await tester.binding.setSurfaceSize(const Size(800, 900));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await abrirApp(tester, rota: Rotas.login);
 
-    final auth = _AuthFake();
-    await tester.pumpWidget(
-      MaterialApp(home: CadastroScreen(authRepository: auth)),
-    );
+    await tocar(tester, 'Criar Conta');
+    expect(find.text('Crie sua conta!'), findsOneWidget);
 
-    await tester.enterText(find.byType(TextFormField).at(0), 'Maria');
-    await tester.enterText(find.byType(TextFormField).at(1), 'm@m.com');
-    await tester.enterText(find.byType(TextFormField).at(2), '12345678');
-    await tester.enterText(find.byType(TextFormField).at(3), '12345678');
-
-    final checkbox = find.byType(Checkbox);
-    await tester.ensureVisible(checkbox);
-    await tester.tap(checkbox);
-
-    final botao = find.text('Criar minha conta');
-    await tester.ensureVisible(botao);
-    await tester.tap(botao);
-    await tester.pumpAndSettle();
-
-    expect(auth.chamouUsuario, isTrue);
+    await tocar(tester, 'Entrar');
     expect(find.text('Bem-vindo de volta!'), findsOneWidget);
   });
 
   testWidgets('cadastra profissional com os campos extras', (tester) async {
-    final auth = _AuthFake();
-    await abrirCadastro(tester, auth);
+    final auth = AuthFake();
+    await abrirCadastro(tester, auth, tamanhoCelular: false);
 
-    await tester.tap(find.text('Profissional'));
-    await tester.pumpAndSettle();
+    await tocar(tester, 'Profissional');
 
     await tester.enterText(find.byType(TextFormField).at(0), 'Dra. Ana');
     await tester.enterText(find.byType(TextFormField).at(1), 'ana@m.com');
@@ -201,16 +136,10 @@ void main() {
 
     await tester.enterText(find.byType(TextFormField).at(3), '12345678');
     await tester.enterText(find.byType(TextFormField).at(4), '12345678');
-
-    final checkbox = find.byType(Checkbox);
-    await tester.ensureVisible(checkbox);
-    await tester.tap(checkbox);
-
-    final botao = find.text('Criar minha conta');
-    await tester.ensureVisible(botao);
-    await tester.tap(botao);
-    await tester.pumpAndSettle();
+    await aceitarTermos(tester);
+    await tocar(tester, 'Criar minha conta');
 
     expect(auth.chamouProfissional, isTrue);
+    expect(find.text('Bem-vindo de volta!'), findsOneWidget);
   });
 }

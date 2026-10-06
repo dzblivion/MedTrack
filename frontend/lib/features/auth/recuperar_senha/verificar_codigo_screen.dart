@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
+import '../../../app/rotas.dart';
 import '../../../core/api/api_client.dart';
 import '../../../theme/app_theme.dart';
 import '../../../widgets/app_button.dart';
@@ -14,13 +17,8 @@ import 'nova_senha_screen.dart';
 
 class VerificarCodigoScreen extends StatefulWidget {
   final String email;
-  final AuthRepository? authRepository;
 
-  const VerificarCodigoScreen({
-    super.key,
-    required this.email,
-    this.authRepository,
-  });
+  const VerificarCodigoScreen({super.key, required this.email});
 
   @override
   State<VerificarCodigoScreen> createState() => _VerificarCodigoScreenState();
@@ -29,7 +27,6 @@ class VerificarCodigoScreen extends StatefulWidget {
 class _VerificarCodigoScreenState extends State<VerificarCodigoScreen> {
   final _formKey = GlobalKey<FormState>();
   final _codigoController = TextEditingController();
-  late final AuthRepository _auth = widget.authRepository ?? AuthRepository();
 
   bool _carregando = false;
 
@@ -45,24 +42,17 @@ class _VerificarCodigoScreenState extends State<VerificarCodigoScreen> {
     final codigo = _codigoController.text.trim();
 
     await _executar(() async {
-      await _auth.verificarCodigo(widget.email, codigo);
+      await context.read<AuthRepository>().verificarCodigo(widget.email, codigo);
       if (!mounted) return;
 
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => NovaSenhaScreen(
-            email: widget.email,
-            codigo: codigo,
-            authRepository: _auth,
-          ),
-        ),
-      );
+      final DadosNovaSenha dados = (email: widget.email, codigo: codigo);
+      context.push(Rotas.novaSenha, extra: dados);
     });
   }
 
   Future<void> _reenviar() async {
     await _executar(() async {
-      await _auth.solicitarCodigo(widget.email);
+      await context.read<AuthRepository>().solicitarCodigo(widget.email);
       if (!mounted) return;
 
       _codigoController.clear();

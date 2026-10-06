@@ -1,23 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
+import '../../app/rotas.dart';
 import '../../core/api/api_client.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_button.dart';
 import '../../widgets/app_logo.dart';
 import '../../widgets/app_snackbar.dart';
 import '../../widgets/app_text_field.dart';
-import '../home/home_screen.dart';
-import 'auth_repository.dart';
 import 'auth_validators.dart';
-import 'cadastro_screen.dart';
-import 'recuperar_senha/solicitar_codigo_screen.dart';
+import 'sessao_controller.dart';
 import 'widgets/auth_layout.dart';
 import 'widgets/auth_link.dart';
 
 class LoginScreen extends StatefulWidget {
-  final AuthRepository? authRepository;
-
-  const LoginScreen({super.key, this.authRepository});
+  const LoginScreen({super.key});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -27,7 +25,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _senhaController = TextEditingController();
-  late final AuthRepository _auth = widget.authRepository ?? AuthRepository();
 
   bool _carregando = false;
 
@@ -43,17 +40,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _carregando = true);
 
+    // Com a sessão ativa, as rotas levam sozinhas para o Início.
     try {
-      final usuario = await _auth.login(
-        _emailController.text.trim(),
-        _senhaController.text,
-      );
-
-      if (!mounted) return;
-
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => HomeScreen(usuario: usuario)),
-      );
+      await context.read<SessaoController>().entrar(
+            _emailController.text.trim(),
+            _senhaController.text,
+          );
     } on ApiException catch (e) {
       if (mounted) AppSnackBar.erro(context, e.mensagem);
     } catch (_) {
@@ -66,14 +58,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _esqueciSenha() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => SolicitarCodigoScreen(
-          authRepository: _auth,
-          emailInicial: _emailController.text.trim(),
-        ),
-      ),
-    );
+    context.push(Rotas.recuperarSenha, extra: _emailController.text.trim());
   }
 
   @override
@@ -125,9 +110,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 AuthLink(
                   texto: 'Criar Conta',
                   negrito: true,
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const CadastroScreen()),
-                  ),
+                  onTap: () => context.push(Rotas.cadastro),
                 ),
               ],
             ),

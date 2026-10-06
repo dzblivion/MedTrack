@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
+import '../../../app/rotas.dart';
 import '../../../core/api/api_client.dart';
 import '../../../widgets/app_button.dart';
 import '../../../widgets/app_snackbar.dart';
@@ -8,17 +11,11 @@ import '../auth_repository.dart';
 import '../auth_validators.dart';
 import '../widgets/auth_layout.dart';
 import '../widgets/auth_link.dart';
-import 'verificar_codigo_screen.dart';
 
 class SolicitarCodigoScreen extends StatefulWidget {
-  final AuthRepository? authRepository;
   final String emailInicial;
 
-  const SolicitarCodigoScreen({
-    super.key,
-    this.authRepository,
-    this.emailInicial = '',
-  });
+  const SolicitarCodigoScreen({super.key, this.emailInicial = ''});
 
   @override
   State<SolicitarCodigoScreen> createState() => _SolicitarCodigoScreenState();
@@ -29,7 +26,6 @@ class _SolicitarCodigoScreenState extends State<SolicitarCodigoScreen> {
   late final _emailController = TextEditingController(
     text: widget.emailInicial,
   );
-  late final AuthRepository _auth = widget.authRepository ?? AuthRepository();
 
   bool _carregando = false;
 
@@ -46,15 +42,10 @@ class _SolicitarCodigoScreenState extends State<SolicitarCodigoScreen> {
     final email = _emailController.text.trim();
 
     try {
-      await _auth.solicitarCodigo(email);
+      await context.read<AuthRepository>().solicitarCodigo(email);
       if (!mounted) return;
 
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) =>
-              VerificarCodigoScreen(email: email, authRepository: _auth),
-        ),
-      );
+      context.push(Rotas.verificarCodigo, extra: email);
     } on ApiException catch (e) {
       if (mounted) AppSnackBar.erro(context, e.mensagem);
     } catch (_) {
@@ -99,7 +90,7 @@ class _SolicitarCodigoScreenState extends State<SolicitarCodigoScreen> {
               child: AuthLink(
                 texto: 'Voltar para o login',
                 negrito: true,
-                onTap: () => Navigator.of(context).pop(),
+                onTap: () => context.go(Rotas.login),
               ),
             ),
           ],

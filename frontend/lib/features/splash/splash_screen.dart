@@ -1,19 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../app/rotas.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_button.dart';
 import '../../widgets/app_logo.dart';
-import '../auth/cadastro_screen.dart';
-import '../auth/login_screen.dart';
 
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
-
-  void _irPara(BuildContext context, Widget tela) {
-    Navigator.of(
-      context,
-    ).pushReplacement(MaterialPageRoute(builder: (_) => tela));
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,7 +44,7 @@ class SplashScreen extends StatelessWidget {
                 const SizedBox(height: 20),
                 AppButton(
                   texto: 'Começar',
-                  onPressed: () => _irPara(context, const CadastroScreen()),
+                  onPressed: () => context.go(Rotas.cadastro),
                 ),
                 const SizedBox(height: 12),
                 Row(
@@ -61,7 +55,7 @@ class SplashScreen extends StatelessWidget {
                       style: TextStyle(color: AppColors.gray, fontSize: 12),
                     ),
                     InkWell(
-                      onTap: () => _irPara(context, const LoginScreen()),
+                      onTap: () => context.go(Rotas.login),
                       child: const Text(
                         'Entrar',
                         style: TextStyle(

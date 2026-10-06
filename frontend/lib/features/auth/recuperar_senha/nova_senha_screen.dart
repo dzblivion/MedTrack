@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
+import '../../../app/rotas.dart';
 import '../../../core/api/api_client.dart';
 import '../../../widgets/app_button.dart';
 import '../../../widgets/app_snackbar.dart';
@@ -8,17 +11,12 @@ import '../auth_repository.dart';
 import '../auth_validators.dart';
 import '../widgets/auth_layout.dart';
 
-class NovaSenhaScreen extends StatefulWidget {
-  final String email;
-  final String codigo;
-  final AuthRepository? authRepository;
+typedef DadosNovaSenha = ({String email, String codigo});
 
-  const NovaSenhaScreen({
-    super.key,
-    required this.email,
-    required this.codigo,
-    this.authRepository,
-  });
+class NovaSenhaScreen extends StatefulWidget {
+  final DadosNovaSenha dados;
+
+  const NovaSenhaScreen({super.key, required this.dados});
 
   @override
   State<NovaSenhaScreen> createState() => _NovaSenhaScreenState();
@@ -28,7 +26,6 @@ class _NovaSenhaScreenState extends State<NovaSenhaScreen> {
   final _formKey = GlobalKey<FormState>();
   final _senhaController = TextEditingController();
   final _confirmarController = TextEditingController();
-  late final AuthRepository _auth = widget.authRepository ?? AuthRepository();
 
   bool _carregando = false;
 
@@ -45,15 +42,15 @@ class _NovaSenhaScreenState extends State<NovaSenhaScreen> {
     setState(() => _carregando = true);
 
     try {
-      await _auth.redefinirSenha(
-        email: widget.email,
-        codigo: widget.codigo,
+      await context.read<AuthRepository>().redefinirSenha(
+        email: widget.dados.email,
+        codigo: widget.dados.codigo,
         novaSenha: _senhaController.text,
       );
       if (!mounted) return;
 
       AppSnackBar.info(context, 'Senha redefinida! Entre com a nova senha.');
-      Navigator.of(context).popUntil((rota) => rota.isFirst);
+      context.go(Rotas.login);
     } on ApiException catch (e) {
       if (mounted) AppSnackBar.erro(context, e.mensagem);
     } catch (_) {

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
+import '../../app/rotas.dart';
 import '../../core/api/api_client.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_button.dart';
@@ -9,16 +12,13 @@ import '../../widgets/app_text_field.dart';
 import 'auth_repository.dart';
 import 'auth_validators.dart';
 import 'br_estados.dart';
-import 'login_screen.dart';
 import 'profissoes_saude.dart';
 import 'widgets/auth_layout.dart';
 import 'widgets/terms_checkbox.dart';
 import 'widgets/user_type_toggle.dart';
 
 class CadastroScreen extends StatefulWidget {
-  final AuthRepository? authRepository;
-
-  const CadastroScreen({super.key, this.authRepository});
+  const CadastroScreen({super.key});
 
   @override
   State<CadastroScreen> createState() => _CadastroScreenState();
@@ -31,7 +31,6 @@ class _CadastroScreenState extends State<CadastroScreen> {
   final _senhaController = TextEditingController();
   final _confirmarSenhaController = TextEditingController();
   final _registroController = TextEditingController();
-  late final AuthRepository _auth = widget.authRepository ?? AuthRepository();
 
   TipoConta _tipo = TipoConta.usuario;
   String? _profissao;
@@ -51,17 +50,7 @@ class _CadastroScreenState extends State<CadastroScreen> {
 
   bool get _ehProfissional => _tipo == TipoConta.profissional;
 
-  // Vindo da Splash, o cadastro é a única tela da pilha: não há o que desempilhar.
-  void _irParaLogin() {
-    final navegador = Navigator.of(context);
-    if (navegador.canPop()) {
-      navegador.pop();
-    } else {
-      navegador.pushReplacement(
-        MaterialPageRoute(builder: (_) => LoginScreen(authRepository: _auth)),
-      );
-    }
-  }
+  void _irParaLogin() => context.go(Rotas.login);
 
   Future<void> _criarConta() async {
     final formValido = _formKey.currentState!.validate();
@@ -73,10 +62,11 @@ class _CadastroScreenState extends State<CadastroScreen> {
     if (!formValido || !_aceitaTermos) return;
 
     setState(() => _carregando = true);
+    final auth = context.read<AuthRepository>();
 
     try {
       if (_ehProfissional) {
-        await _auth.cadastrarProfissional(
+        await auth.cadastrarProfissional(
           nome: _nomeController.text.trim(),
           email: _emailController.text.trim(),
           senha: _senhaController.text,
@@ -85,7 +75,7 @@ class _CadastroScreenState extends State<CadastroScreen> {
           ufRegistro: _ufRegistro!,
         );
       } else {
-        await _auth.cadastrarUsuario(
+        await auth.cadastrarUsuario(
           nome: _nomeController.text.trim(),
           email: _emailController.text.trim(),
           senha: _senhaController.text,
