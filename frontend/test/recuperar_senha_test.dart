@@ -116,6 +116,27 @@ void main() {
     expect(find.widgetWithText(TextFormField, 'm@m.com'), findsOneWidget);
   });
 
+  testWidgets('pelo login, a seta de voltar retorna ao login', (tester) async {
+    await abrirApp(tester, rota: Rotas.login);
+
+    await tocar(tester, 'Esqueci minha senha');
+    await tester.tap(find.byTooltip('Voltar'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Bem-vindo de volta!'), findsOneWidget);
+  });
+
+  testWidgets('aberta direto pelo endereço, a seta leva ao login', (
+    tester,
+  ) async {
+    await abrirApp(tester, rota: Rotas.recuperarSenha);
+
+    await tester.tap(find.byTooltip('Voltar'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Bem-vindo de volta!'), findsOneWidget);
+  });
+
   testWidgets('abrir a tela do código sem passar pelo e-mail recomeça o fluxo', (
     tester,
   ) async {

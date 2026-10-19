@@ -6,13 +6,15 @@ import '../../../theme/app_theme.dart';
 class TermsCheckbox extends StatelessWidget {
   final bool aceito;
   final ValueChanged<bool> onChanged;
-  final VoidCallback onTapLink;
+  final VoidCallback onTapTermos;
+  final VoidCallback onTapPrivacidade;
 
   const TermsCheckbox({
     super.key,
     required this.aceito,
     required this.onChanged,
-    required this.onTapLink,
+    required this.onTapTermos,
+    required this.onTapPrivacidade,
   });
 
   static const _estiloTexto = TextStyle(
@@ -49,13 +51,14 @@ class TermsCheckbox extends StatelessWidget {
                   TextSpan(
                     text: 'Termos de Uso',
                     style: _estiloLink,
-                    recognizer: TapGestureRecognizer()..onTap = onTapLink,
+                    recognizer: TapGestureRecognizer()..onTap = onTapTermos,
                   ),
                   const TextSpan(text: ' e a '),
                   TextSpan(
                     text: 'Política de Privacidade',
                     style: _estiloLink,
-                    recognizer: TapGestureRecognizer()..onTap = onTapLink,
+                    recognizer: TapGestureRecognizer()
+                      ..onTap = onTapPrivacidade,
                   ),
                 ],
               ),

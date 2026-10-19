@@ -14,6 +14,7 @@ import '../auth_validators.dart';
 import '../widgets/auth_layout.dart';
 import '../widgets/auth_link.dart';
 import 'nova_senha_screen.dart';
+import 'voltar_recuperacao.dart';
 
 class VerificarCodigoScreen extends StatefulWidget {
   final String email;
@@ -82,6 +83,7 @@ class _VerificarCodigoScreenState extends State<VerificarCodigoScreen> {
       titulo: 'Verifique seu e-mail',
       subtitulo: 'Digite o código de 6 dígitos que enviamos.',
       alturaCabecalho: 0.3,
+      onVoltar: () => voltarDaRecuperacao(context),
       child: Form(
         key: _formKey,
         child: Column(

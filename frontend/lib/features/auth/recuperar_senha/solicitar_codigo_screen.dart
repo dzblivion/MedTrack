@@ -9,8 +9,9 @@ import '../../../widgets/app_snackbar.dart';
 import '../../../widgets/app_text_field.dart';
 import '../auth_repository.dart';
 import '../auth_validators.dart';
+import '../sessao_controller.dart';
 import '../widgets/auth_layout.dart';
-import '../widgets/auth_link.dart';
+import 'voltar_recuperacao.dart';
 
 class SolicitarCodigoScreen extends StatefulWidget {
   final String emailInicial;
@@ -59,10 +60,14 @@ class _SolicitarCodigoScreenState extends State<SolicitarCodigoScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Logado, esta é a tela "Alterar senha" do Perfil.
+    final logado = context.watch<SessaoController>().logado;
+
     return AuthLayout(
-      titulo: 'Esqueceu sua senha?',
+      titulo: logado ? 'Alterar senha' : 'Esqueceu sua senha?',
       subtitulo: 'Enviaremos um código para o seu e-mail.',
       alturaCabecalho: 0.3,
+      onVoltar: () => voltarDaRecuperacao(context),
       child: Form(
         key: _formKey,
         child: Column(
@@ -84,14 +89,6 @@ class _SolicitarCodigoScreenState extends State<SolicitarCodigoScreen> {
               texto: 'Enviar código',
               carregando: _carregando,
               onPressed: _enviarCodigo,
-            ),
-            const SizedBox(height: 12),
-            Center(
-              child: AuthLink(
-                texto: 'Voltar para o login',
-                negrito: true,
-                onTap: () => context.go(Rotas.login),
-              ),
             ),
           ],
         ),

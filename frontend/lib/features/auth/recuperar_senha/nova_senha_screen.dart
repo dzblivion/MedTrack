@@ -9,7 +9,9 @@ import '../../../widgets/app_snackbar.dart';
 import '../../../widgets/app_text_field.dart';
 import '../auth_repository.dart';
 import '../auth_validators.dart';
+import '../sessao_controller.dart';
 import '../widgets/auth_layout.dart';
+import 'voltar_recuperacao.dart';
 
 typedef DadosNovaSenha = ({String email, String codigo});
 
@@ -49,8 +51,14 @@ class _NovaSenhaScreenState extends State<NovaSenhaScreen> {
       );
       if (!mounted) return;
 
-      AppSnackBar.info(context, 'Senha redefinida! Entre com a nova senha.');
-      context.go(Rotas.login);
+      // Logado, veio do "Alterar senha" do Perfil: volta para lá.
+      if (context.read<SessaoController>().logado) {
+        AppSnackBar.info(context, 'Senha alterada!');
+        context.go(Rotas.perfil);
+      } else {
+        AppSnackBar.info(context, 'Senha redefinida! Entre com a nova senha.');
+        context.go(Rotas.login);
+      }
     } on ApiException catch (e) {
       if (mounted) AppSnackBar.erro(context, e.mensagem);
     } catch (_) {
@@ -68,6 +76,7 @@ class _NovaSenhaScreenState extends State<NovaSenhaScreen> {
       titulo: 'Crie uma nova senha',
       subtitulo: 'Use pelo menos 8 caracteres.',
       alturaCabecalho: 0.3,
+      onVoltar: () => voltarDaRecuperacao(context),
       child: Form(
         key: _formKey,
         child: Column(

@@ -10,6 +10,8 @@ import '../features/auth/recuperar_senha/verificar_codigo_screen.dart';
 import '../features/auth/sessao_controller.dart';
 import '../features/home/home_screen.dart';
 import '../features/perfil/perfil_screen.dart';
+import '../features/perfil/texto_legal_screen.dart';
+import '../features/perfil/textos_legais.dart';
 import '../features/splash/splash_screen.dart';
 import '../features/tratamentos/tratamento.dart';
 import '../features/tratamentos/tratamento_detalhe_screen.dart';
@@ -21,13 +23,12 @@ import '../widgets/em_construcao.dart';
 import 'app_shell.dart';
 import 'rotas.dart';
 
-/// Telas acessíveis sem login. Logado, quem tenta abri-las vai para o Início.
-const _rotasPublicas = [
-  Rotas.splash,
-  Rotas.login,
-  Rotas.cadastro,
-  Rotas.recuperarSenha,
-];
+/// Só para quem não está logado; logado, quem tenta abri-las vai para o Início.
+const _soSemLogin = [Rotas.splash, Rotas.login, Rotas.cadastro];
+
+/// Abertas com ou sem login. A troca de senha do Perfil reaproveita a
+/// recuperação por código.
+const _abertas = [Rotas.recuperarSenha, Rotas.termos, Rotas.privacidade];
 
 GoRouter criarRouter(
   SessaoController sessao, {
@@ -41,9 +42,12 @@ GoRouter criarRouter(
     initialLocation: rotaInicial,
     refreshListenable: sessao,
     redirect: (context, state) {
-      final publica = _rotasPublicas.any(state.matchedLocation.startsWith);
-      if (!sessao.logado && !publica) return Rotas.login;
-      if (sessao.logado && publica) return Rotas.inicio;
+      final local = state.matchedLocation;
+      if (_abertas.any(local.startsWith)) return null;
+
+      final semLogin = _soSemLogin.any(local.startsWith);
+      if (!sessao.logado && !semLogin) return Rotas.login;
+      if (sessao.logado && semLogin) return Rotas.inicio;
       return null;
     },
     routes: [
@@ -79,6 +83,20 @@ GoRouter criarRouter(
             state.extra is DadosNovaSenha ? null : Rotas.recuperarSenha,
         builder: (context, state) =>
             NovaSenhaScreen(dados: state.extra as DadosNovaSenha),
+      ),
+      GoRoute(
+        path: Rotas.termos,
+        builder: (context, state) => const TextoLegalScreen(
+          titulo: 'Termos de uso',
+          secoes: termosDeUso,
+        ),
+      ),
+      GoRoute(
+        path: Rotas.privacidade,
+        builder: (context, state) => const TextoLegalScreen(
+          titulo: 'Privacidade e dados',
+          secoes: politicaDePrivacidade,
+        ),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navegacao) => AppShell(navegacao: navegacao),

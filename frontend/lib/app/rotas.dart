@@ -12,4 +12,6 @@ abstract final class Rotas {
   static String editarTratamento(int id) => '/tratamentos/$id/editar';
   static const historico = '/historico';
   static const perfil = '/perfil';
+  static const termos = '/termos';
+  static const privacidade = '/privacidade';
 }

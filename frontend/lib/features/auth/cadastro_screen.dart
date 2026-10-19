@@ -205,8 +205,8 @@ class _CadastroScreenState extends State<CadastroScreen> {
             TermsCheckbox(
               aceito: _aceitaTermos,
               onChanged: (v) => setState(() => _aceitaTermos = v),
-              onTapLink: () =>
-                  AppSnackBar.info(context, 'Tela em construção.'),
+              onTapTermos: () => context.push(Rotas.termos),
+              onTapPrivacidade: () => context.push(Rotas.privacidade),
             ),
             const SizedBox(height: 16),
             AppButton(

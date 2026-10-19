@@ -17,6 +17,9 @@ class AuthLayout extends StatelessWidget {
   /// do app no login). Fica centralizado abaixo do subtítulo.
   final Widget? marcaCabecalho;
 
+  /// Mostra a seta de voltar no cabeçalho, no padrão das outras telas.
+  final VoidCallback? onVoltar;
+
   const AuthLayout({
     super.key,
     required this.titulo,
@@ -24,6 +27,7 @@ class AuthLayout extends StatelessWidget {
     required this.child,
     this.alturaCabecalho = 0.39,
     this.marcaCabecalho,
+    this.onVoltar,
   });
 
   @override
@@ -44,6 +48,7 @@ class AuthLayout extends StatelessWidget {
                         subtitulo: subtitulo,
                         altura: constraints.maxHeight * alturaCabecalho,
                         marca: marcaCabecalho,
+                        onVoltar: onVoltar,
                       ),
                       Expanded(child: _Painel(child: child)),
                     ],
@@ -63,12 +68,14 @@ class _Cabecalho extends StatelessWidget {
   final String subtitulo;
   final double altura;
   final Widget? marca;
+  final VoidCallback? onVoltar;
 
   const _Cabecalho({
     required this.titulo,
     required this.subtitulo,
     required this.altura,
     this.marca,
+    this.onVoltar,
   });
 
   @override
@@ -76,32 +83,52 @@ class _Cabecalho extends StatelessWidget {
     return SizedBox(
       height: altura,
       width: double.infinity,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 32, 24, 0),
-        child: Column(
-          children: [
-            if (marca != null) ...[marca!, const SizedBox(height: 28)],
-            Text(
-              titulo,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 28,
-                fontWeight: FontWeight.w700,
+      child: Stack(
+        alignment: Alignment.topCenter,
+        children: [
+          Padding(
+            // Com a seta, o título desce para não ficar ao lado dela.
+            padding: EdgeInsets.fromLTRB(24, onVoltar == null ? 32 : 52, 24, 0),
+            child: _textos(),
+          ),
+          if (onVoltar != null)
+            Positioned(
+              top: 4,
+              left: 4,
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                tooltip: 'Voltar',
+                onPressed: onVoltar,
               ),
             ),
-            const SizedBox(height: 4),
-            SizedBox(
-              width: 210,
-              child: Text(
-                subtitulo,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.white, fontSize: 14),
-              ),
-            ),
-          ],
-        ),
+        ],
       ),
+    );
+  }
+
+  Widget _textos() {
+    return Column(
+      children: [
+        if (marca != null) ...[marca!, const SizedBox(height: 28)],
+        Text(
+          titulo,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 28,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 4),
+        SizedBox(
+          width: 210,
+          child: Text(
+            subtitulo,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.white, fontSize: 14),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -5,9 +5,15 @@ import '../theme/app_theme.dart';
 /// Avatar com a inicial + nome, no topo das abas do app (como no Figma).
 class CabecalhoUsuario extends StatelessWidget {
   final String nome;
+  final String? subtitulo;
   final Widget? acao;
 
-  const CabecalhoUsuario({super.key, required this.nome, this.acao});
+  const CabecalhoUsuario({
+    super.key,
+    required this.nome,
+    this.subtitulo,
+    this.acao,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -38,15 +44,27 @@ class CabecalhoUsuario extends StatelessWidget {
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: Text(
-            nome,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: AppColors.title,
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                nome,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: AppColors.title,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              if (subtitulo != null)
+                Text(
+                  subtitulo!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: AppColors.gray, fontSize: 12),
+                ),
+            ],
           ),
         ),
         ?acao,
