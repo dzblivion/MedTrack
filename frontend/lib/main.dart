@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -8,6 +9,7 @@ import 'core/api/api_client.dart';
 import 'core/storage/session_storage.dart';
 import 'features/auth/auth_repository.dart';
 import 'features/auth/sessao_controller.dart';
+import 'features/tratamentos/tratamento_repository.dart';
 import 'theme/app_theme.dart';
 
 Future<void> main() async {
@@ -18,13 +20,21 @@ Future<void> main() async {
   final sessao = SessaoController(auth, SessionStorage(), api);
   await sessao.restaurar();
 
-  runApp(MedTrackApp(api: api, auth: auth, sessao: sessao));
+  runApp(
+    MedTrackApp(
+      api: api,
+      auth: auth,
+      sessao: sessao,
+      tratamentos: TratamentoRepository(api),
+    ),
+  );
 }
 
 class MedTrackApp extends StatefulWidget {
   final ApiClient api;
   final AuthRepository auth;
   final SessaoController sessao;
+  final TratamentoRepository tratamentos;
   final String rotaInicial;
 
   const MedTrackApp({
@@ -32,6 +42,7 @@ class MedTrackApp extends StatefulWidget {
     required this.api,
     required this.auth,
     required this.sessao,
+    required this.tratamentos,
     this.rotaInicial = Rotas.splash,
   });
 
@@ -57,6 +68,7 @@ class _MedTrackAppState extends State<MedTrackApp> {
       providers: [
         Provider.value(value: widget.api),
         Provider.value(value: widget.auth),
+        Provider.value(value: widget.tratamentos),
         ChangeNotifierProvider.value(value: widget.sessao),
       ],
       child: MaterialApp.router(
@@ -64,6 +76,10 @@ class _MedTrackAppState extends State<MedTrackApp> {
         title: 'MedTrack',
         theme: AppTheme.lightTheme,
         routerConfig: _router,
+        // Calendário, botões e textos prontos do Flutter em português.
+        locale: const Locale('pt', 'BR'),
+        supportedLocales: const [Locale('pt', 'BR')],
+        localizationsDelegates: GlobalMaterialLocalizations.delegates,
       ),
     );
   }

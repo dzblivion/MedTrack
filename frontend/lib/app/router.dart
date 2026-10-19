@@ -1,4 +1,6 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import '../features/auth/cadastro_screen.dart';
 import '../features/auth/login_screen.dart';
@@ -9,6 +11,11 @@ import '../features/auth/sessao_controller.dart';
 import '../features/home/home_screen.dart';
 import '../features/perfil/perfil_screen.dart';
 import '../features/splash/splash_screen.dart';
+import '../features/tratamentos/tratamento.dart';
+import '../features/tratamentos/tratamento_form_screen.dart';
+import '../features/tratamentos/tratamento_repository.dart';
+import '../features/tratamentos/tratamentos_controller.dart';
+import '../features/tratamentos/tratamentos_screen.dart';
 import '../widgets/em_construcao.dart';
 import 'app_shell.dart';
 import 'rotas.dart';
@@ -25,7 +32,11 @@ GoRouter criarRouter(
   SessaoController sessao, {
   String rotaInicial = Rotas.splash,
 }) {
+  // Telas abertas com esta chave ficam por cima do menu inferior.
+  final raiz = GlobalKey<NavigatorState>();
+
   return GoRouter(
+    navigatorKey: raiz,
     initialLocation: rotaInicial,
     refreshListenable: sessao,
     redirect: (context, state) {
@@ -83,8 +94,35 @@ GoRouter criarRouter(
             routes: [
               GoRoute(
                 path: Rotas.tratamentos,
-                builder: (context, state) =>
-                    const EmConstrucao(titulo: 'Tratamentos'),
+                builder: (context, state) => ChangeNotifierProvider(
+                  create: (context) => TratamentosController(
+                    context.read<TratamentoRepository>(),
+                  )..carregar(),
+                  child: const TratamentosScreen(),
+                ),
+                routes: [
+                  GoRoute(
+                    path: 'novo',
+                    parentNavigatorKey: raiz,
+                    builder: (context, state) => const TratamentoFormScreen(),
+                  ),
+                  // Sem o tratamento (ex.: página recarregada), volta para a lista.
+                  GoRoute(
+                    path: ':id/editar',
+                    parentNavigatorKey: raiz,
+                    redirect: (context, state) =>
+                        state.extra is Tratamento ? null : Rotas.tratamentos,
+                    builder: (context, state) => TratamentoFormScreen(
+                      original: state.extra as Tratamento,
+                    ),
+                  ),
+                  // Provisória: o detalhe vem na próxima etapa.
+                  GoRoute(
+                    path: ':id',
+                    builder: (context, state) =>
+                        _provisoria(context, 'Detalhe do tratamento'),
+                  ),
+                ],
               ),
             ],
           ),
@@ -110,3 +148,11 @@ GoRouter criarRouter(
     ],
   );
 }
+
+Widget _provisoria(BuildContext context, String titulo) => EmConstrucao(
+      titulo: titulo,
+      acao: TextButton(
+        onPressed: () => context.pop(),
+        child: const Text('Voltar'),
+      ),
+    );

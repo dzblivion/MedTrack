@@ -49,8 +49,11 @@ void main() {
     await abrirApp(tester, storage: storageComSessao(daquiUmaHora));
 
     await tocar(tester, 'Tratamentos');
-    expect(find.text('Em construção'), findsOneWidget);
+    expect(find.text('Meus tratamentos:'), findsOneWidget);
     expect(find.text('Olá, Maria!'), findsNothing);
+
+    await tocar(tester, 'Histórico');
+    expect(find.text('Em construção'), findsOneWidget);
 
     await tocar(tester, 'Início');
     expect(find.text('Olá, Maria!'), findsOneWidget);

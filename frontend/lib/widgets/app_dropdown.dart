@@ -10,6 +10,9 @@ class AppDropdown extends StatelessWidget {
   final ValueChanged<String?> onChanged;
   final String? Function(String?)? validator;
 
+  /// Texto exibido para cada opção, quando difere do valor enviado à API.
+  final String Function(String)? rotulo;
+
   const AppDropdown({
     super.key,
     required this.label,
@@ -18,6 +21,7 @@ class AppDropdown extends StatelessWidget {
     required this.opcoes,
     required this.onChanged,
     this.validator,
+    this.rotulo,
   });
 
   @override
@@ -69,7 +73,12 @@ class AppDropdown extends StatelessWidget {
             ),
           ),
           items: opcoes
-              .map((o) => DropdownMenuItem(value: o, child: Text(o)))
+              .map(
+                (o) => DropdownMenuItem(
+                  value: o,
+                  child: Text(rotulo?.call(o) ?? o),
+                ),
+              )
               .toList(),
         ),
       ],

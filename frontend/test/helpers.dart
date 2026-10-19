@@ -8,6 +8,9 @@ import 'package:frontend/core/storage/session_storage.dart';
 import 'package:frontend/features/auth/auth_repository.dart';
 import 'package:frontend/features/auth/sessao_controller.dart';
 import 'package:frontend/features/auth/usuario.dart';
+import 'package:frontend/features/tratamentos/dados_tratamento.dart';
+import 'package:frontend/features/tratamentos/tratamento.dart';
+import 'package:frontend/features/tratamentos/tratamento_repository.dart';
 import 'package:frontend/main.dart';
 
 const maria = Usuario(id: 1, nome: 'Maria', email: 'm@m.com');
@@ -95,6 +98,63 @@ class AuthFake extends AuthRepository {
   }
 }
 
+/// Lista de tratamentos falsa. [erro] faz a próxima busca falhar.
+class TratamentoFake extends TratamentoRepository {
+  List<Tratamento> tratamentos;
+  ApiException? erro;
+  ApiException? erroSalvar;
+  int buscas = 0;
+  Map<String, dynamic>? criado;
+  ({int id, Map<String, dynamic> dados})? atualizado;
+
+  TratamentoFake([this.tratamentos = const []]) : super(ApiClient());
+
+  @override
+  Future<void> criar(DadosTratamento dados) async {
+    if (erroSalvar != null) throw erroSalvar!;
+    criado = dados.toJson();
+  }
+
+  @override
+  Future<void> atualizar(int id, DadosTratamento dados) async {
+    if (erroSalvar != null) throw erroSalvar!;
+    atualizado = (id: id, dados: dados.toJson());
+  }
+
+  @override
+  Future<List<Tratamento>> listar() async {
+    buscas++;
+    final falha = erro;
+    if (falha != null) {
+      erro = null;
+      throw falha;
+    }
+    return tratamentos;
+  }
+}
+
+/// Tratamento de exemplo que começou há [diasAtras] dias.
+Tratamento tratamentoExemplo({
+  int id = 1,
+  String medicamento = 'Amoxicilina',
+  StatusTratamento status = StatusTratamento.ativo,
+  int diasAtras = 0,
+  int duracaoDias = 7,
+}) {
+  final hoje = DateTime.now();
+  return Tratamento(
+    id: id,
+    medicamento: medicamento,
+    dosagemValor: 500,
+    dosagemUnidade: 'mg',
+    quantidadePorDose: 1,
+    formaConsumo: 'oral',
+    dataInicio: DateTime(hoje.year, hoje.month, hoje.day - diasAtras),
+    duracaoDias: duracaoDias,
+    status: status,
+  );
+}
+
 /// Um JWT com o "exp" pedido. A assinatura é falsa: o app não a confere.
 String tokenFalso({required DateTime expiraEm}) {
   String parte(Map<String, Object> dados) =>
@@ -116,6 +176,7 @@ Future<SessaoController> abrirApp(
   AuthRepository? auth,
   ApiClient? api,
   StorageMemoria? storage,
+  TratamentoRepository? tratamentos,
   String rota = Rotas.splash,
 }) async {
   final apiUsada = api ?? ApiClient();
@@ -132,6 +193,7 @@ Future<SessaoController> abrirApp(
       api: apiUsada,
       auth: authUsado,
       sessao: sessao,
+      tratamentos: tratamentos ?? TratamentoFake(),
       rotaInicial: rota,
     ),
   );

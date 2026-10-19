@@ -15,6 +15,9 @@ class AppTextField extends StatelessWidget {
   final List<TextInputFormatter>? inputFormatters;
   final Iterable<String>? autofillHints;
 
+  /// Campo só de toque (ex.: abre um seletor de data em vez do teclado).
+  final VoidCallback? onTap;
+
   const AppTextField({
     super.key,
     required this.label,
@@ -27,6 +30,7 @@ class AppTextField extends StatelessWidget {
     this.onFieldSubmitted,
     this.inputFormatters,
     this.autofillHints,
+    this.onTap,
   });
 
   @override
@@ -52,6 +56,8 @@ class AppTextField extends StatelessWidget {
           onFieldSubmitted: onFieldSubmitted,
           inputFormatters: inputFormatters,
           autofillHints: autofillHints,
+          readOnly: onTap != null,
+          onTap: onTap,
           style: const TextStyle(color: AppColors.inputText, fontSize: 12),
           decoration: InputDecoration(
             hintText: hint,
