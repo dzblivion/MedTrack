@@ -1,0 +1,98 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+
+import '../../../app/rotas.dart';
+import '../../../core/api/api_client.dart';
+import '../../../widgets/app_button.dart';
+import '../../../widgets/app_snackbar.dart';
+import '../../../widgets/app_text_field.dart';
+import '../auth_repository.dart';
+import '../auth_validators.dart';
+import '../sessao_controller.dart';
+import '../widgets/auth_layout.dart';
+import 'voltar_recuperacao.dart';
+
+class SolicitarCodigoScreen extends StatefulWidget {
+  final String emailInicial;
+
+  const SolicitarCodigoScreen({super.key, this.emailInicial = ''});
+
+  @override
+  State<SolicitarCodigoScreen> createState() => _SolicitarCodigoScreenState();
+}
+
+class _SolicitarCodigoScreenState extends State<SolicitarCodigoScreen> {
+  final _formKey = GlobalKey<FormState>();
+  late final _emailController = TextEditingController(
+    text: widget.emailInicial,
+  );
+
+  bool _carregando = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _enviarCodigo() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _carregando = true);
+    final email = _emailController.text.trim();
+
+    try {
+      await context.read<AuthRepository>().solicitarCodigo(email);
+      if (!mounted) return;
+
+      context.push(Rotas.verificarCodigo, extra: email);
+    } on ApiException catch (e) {
+      if (mounted) AppSnackBar.erro(context, e.mensagem);
+    } catch (_) {
+      if (mounted) {
+        AppSnackBar.erro(context, 'Algo deu errado. Tente novamente.');
+      }
+    } finally {
+      if (mounted) setState(() => _carregando = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Logado, esta é a tela "Alterar senha" do Perfil.
+    final logado = context.watch<SessaoController>().logado;
+
+    return AuthLayout(
+      titulo: logado ? 'Alterar senha' : 'Esqueceu sua senha?',
+      subtitulo: 'Enviaremos um código para o seu e-mail.',
+      alturaCabecalho: 0.3,
+      onVoltar: () => voltarDaRecuperacao(context),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AppTextField(
+              label: 'E-mail',
+              hint: 'seu@email.com',
+              controller: _emailController,
+              keyboardType: TextInputType.emailAddress,
+              textInputAction: TextInputAction.done,
+              autofillHints: const [AutofillHints.email],
+              validator: AuthValidators.email,
+              onFieldSubmitted: (_) => _enviarCodigo(),
+            ),
+            const Spacer(),
+            const SizedBox(height: 24),
+            AppButton(
+              texto: 'Enviar código',
+              carregando: _carregando,
+              onPressed: _enviarCodigo,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

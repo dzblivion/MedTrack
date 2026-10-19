@@ -1,0 +1,118 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+
+import '../../../app/rotas.dart';
+import '../../../core/api/api_client.dart';
+import '../../../widgets/app_button.dart';
+import '../../../widgets/app_snackbar.dart';
+import '../../../widgets/app_text_field.dart';
+import '../auth_repository.dart';
+import '../auth_validators.dart';
+import '../sessao_controller.dart';
+import '../widgets/auth_layout.dart';
+import 'voltar_recuperacao.dart';
+
+typedef DadosNovaSenha = ({String email, String codigo});
+
+class NovaSenhaScreen extends StatefulWidget {
+  final DadosNovaSenha dados;
+
+  const NovaSenhaScreen({super.key, required this.dados});
+
+  @override
+  State<NovaSenhaScreen> createState() => _NovaSenhaScreenState();
+}
+
+class _NovaSenhaScreenState extends State<NovaSenhaScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _senhaController = TextEditingController();
+  final _confirmarController = TextEditingController();
+
+  bool _carregando = false;
+
+  @override
+  void dispose() {
+    _senhaController.dispose();
+    _confirmarController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _redefinir() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _carregando = true);
+
+    try {
+      await context.read<AuthRepository>().redefinirSenha(
+        email: widget.dados.email,
+        codigo: widget.dados.codigo,
+        novaSenha: _senhaController.text,
+      );
+      if (!mounted) return;
+
+      // Logado, veio do "Alterar senha" do Perfil: volta para lá.
+      if (context.read<SessaoController>().logado) {
+        AppSnackBar.info(context, 'Senha alterada!');
+        context.go(Rotas.perfil);
+      } else {
+        AppSnackBar.info(context, 'Senha redefinida! Entre com a nova senha.');
+        context.go(Rotas.login);
+      }
+    } on ApiException catch (e) {
+      if (mounted) AppSnackBar.erro(context, e.mensagem);
+    } catch (_) {
+      if (mounted) {
+        AppSnackBar.erro(context, 'Algo deu errado. Tente novamente.');
+      }
+    } finally {
+      if (mounted) setState(() => _carregando = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AuthLayout(
+      titulo: 'Crie uma nova senha',
+      subtitulo: 'Use pelo menos 8 caracteres.',
+      alturaCabecalho: 0.3,
+      onVoltar: () => voltarDaRecuperacao(context),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AppTextField(
+              label: 'Nova senha',
+              hint: 'Digite a nova senha',
+              controller: _senhaController,
+              obscureText: true,
+              textInputAction: TextInputAction.next,
+              autofillHints: const [AutofillHints.newPassword],
+              validator: AuthValidators.novaSenha,
+            ),
+            const SizedBox(height: 18),
+            AppTextField(
+              label: 'Confirmar nova senha',
+              hint: 'Confirme a nova senha',
+              controller: _confirmarController,
+              obscureText: true,
+              textInputAction: TextInputAction.done,
+              validator: AuthValidators.confirmarSenha(
+                () => _senhaController.text,
+              ),
+              onFieldSubmitted: (_) => _redefinir(),
+            ),
+            const Spacer(),
+            const SizedBox(height: 24),
+            AppButton(
+              texto: 'Redefinir senha',
+              carregando: _carregando,
+              onPressed: _redefinir,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
