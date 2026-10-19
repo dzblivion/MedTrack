@@ -27,9 +27,18 @@ class TratamentoRepository {
     }
   }
 
+  Future<Tratamento> buscar(int id) async =>
+      Tratamento.fromJson(await _api.get('/tratamentos/$id'));
+
   Future<void> criar(DadosTratamento dados) =>
       _api.post('/tratamentos', dados.toJson());
 
   Future<void> atualizar(int id, DadosTratamento dados) =>
       _api.put('/tratamentos/$id', dados.toJson());
+
+  Future<void> alterarStatus(int id, StatusTratamento status) =>
+      _api.patch('/tratamentos/$id/status', {'status': status.name});
+
+  /// O backend não apaga: marca como cancelado e mantém o histórico.
+  Future<void> cancelar(int id) => _api.delete('/tratamentos/$id');
 }

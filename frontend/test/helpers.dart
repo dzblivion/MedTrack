@@ -109,6 +109,51 @@ class TratamentoFake extends TratamentoRepository {
 
   TratamentoFake([this.tratamentos = const []]) : super(ApiClient());
 
+  final mudancasStatus = <StatusTratamento>[];
+  int cancelamentos = 0;
+  ApiException? erroBuscar;
+
+  @override
+  Future<Tratamento> buscar(int id) async {
+    final falha = erroBuscar;
+    if (falha != null) {
+      erroBuscar = null;
+      throw falha;
+    }
+    return tratamentos.firstWhere((t) => t.id == id);
+  }
+
+  @override
+  Future<void> alterarStatus(int id, StatusTratamento status) async {
+    mudancasStatus.add(status);
+    _trocarStatus(id, status);
+  }
+
+  @override
+  Future<void> cancelar(int id) async {
+    cancelamentos++;
+    _trocarStatus(id, StatusTratamento.cancelado);
+  }
+
+  void _trocarStatus(int id, StatusTratamento status) {
+    tratamentos = [
+      for (final t in tratamentos)
+        t.id != id
+            ? t
+            : Tratamento(
+                id: t.id,
+                medicamento: t.medicamento,
+                dosagemValor: t.dosagemValor,
+                dosagemUnidade: t.dosagemUnidade,
+                quantidadePorDose: t.quantidadePorDose,
+                formaConsumo: t.formaConsumo,
+                dataInicio: t.dataInicio,
+                duracaoDias: t.duracaoDias,
+                status: status,
+              ),
+    ];
+  }
+
   @override
   Future<void> criar(DadosTratamento dados) async {
     if (erroSalvar != null) throw erroSalvar!;

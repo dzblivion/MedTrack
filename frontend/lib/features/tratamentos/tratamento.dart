@@ -90,11 +90,13 @@ class Tratamento {
 
   bool periodoEncerrado(DateTime hoje) => _soData(hoje).isAfter(dataFim);
 
+  /// "500 mg".
+  String get dosagem => '${formatarNumero(dosagemValor)} ${_unidadeExibida()}';
+
   /// "500 mg · 1 por dose · oral".
   String get resumoDosagem {
     final forma = formasConsumo[formaConsumo]?.toLowerCase() ?? formaConsumo;
-    return '${formatarNumero(dosagemValor)} ${_unidadeExibida()} · '
-        '${formatarNumero(quantidadePorDose)} por dose · $forma';
+    return '$dosagem · ${formatarNumero(quantidadePorDose)} por dose · $forma';
   }
 
   String _unidadeExibida() => switch (dosagemUnidade) {

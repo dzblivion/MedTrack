@@ -12,6 +12,7 @@ import '../features/home/home_screen.dart';
 import '../features/perfil/perfil_screen.dart';
 import '../features/splash/splash_screen.dart';
 import '../features/tratamentos/tratamento.dart';
+import '../features/tratamentos/tratamento_detalhe_screen.dart';
 import '../features/tratamentos/tratamento_form_screen.dart';
 import '../features/tratamentos/tratamento_repository.dart';
 import '../features/tratamentos/tratamentos_controller.dart';
@@ -116,11 +117,13 @@ GoRouter criarRouter(
                       original: state.extra as Tratamento,
                     ),
                   ),
-                  // Provisória: o detalhe vem na próxima etapa.
                   GoRoute(
                     path: ':id',
+                    parentNavigatorKey: raiz,
+                    redirect: (context, state) =>
+                        _idDaRota(state) == null ? Rotas.tratamentos : null,
                     builder: (context, state) =>
-                        _provisoria(context, 'Detalhe do tratamento'),
+                        TratamentoDetalheScreen(id: _idDaRota(state)!),
                   ),
                 ],
               ),
@@ -149,10 +152,5 @@ GoRouter criarRouter(
   );
 }
 
-Widget _provisoria(BuildContext context, String titulo) => EmConstrucao(
-      titulo: titulo,
-      acao: TextButton(
-        onPressed: () => context.pop(),
-        child: const Text('Voltar'),
-      ),
-    );
+int? _idDaRota(GoRouterState state) =>
+    int.tryParse(state.pathParameters['id'] ?? '');

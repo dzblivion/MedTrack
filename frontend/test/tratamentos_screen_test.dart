@@ -126,6 +126,6 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.chevron_right));
     await tester.pumpAndSettle();
-    expect(find.text('Detalhe do tratamento'), findsOneWidget);
+    expect(find.text('Período'), findsOneWidget);
   });
 }
