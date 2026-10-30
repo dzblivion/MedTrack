@@ -32,15 +32,6 @@ CREATE TABLE `dias_semana_frequencia` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `dias_semana_frequencia`
---
-
-LOCK TABLES `dias_semana_frequencia` WRITE;
-/*!40000 ALTER TABLE `dias_semana_frequencia` DISABLE KEYS */;
-/*!40000 ALTER TABLE `dias_semana_frequencia` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `doses`
 --
 
@@ -60,15 +51,6 @@ CREATE TABLE `doses` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `doses`
---
-
-LOCK TABLES `doses` WRITE;
-/*!40000 ALTER TABLE `doses` DISABLE KEYS */;
-/*!40000 ALTER TABLE `doses` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `horarios_frequencia`
 --
 
@@ -86,15 +68,6 @@ CREATE TABLE `horarios_frequencia` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `horarios_frequencia`
---
-
-LOCK TABLES `horarios_frequencia` WRITE;
-/*!40000 ALTER TABLE `horarios_frequencia` DISABLE KEYS */;
-/*!40000 ALTER TABLE `horarios_frequencia` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `profissionais`
 --
 
@@ -110,17 +83,31 @@ CREATE TABLE `profissionais` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_profissionais_usuario` (`usuario_id`),
   CONSTRAINT `fk_profissionais_usuario` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `profissionais`
+-- Table structure for table `recuperacoes_senha`
 --
 
-LOCK TABLES `profissionais` WRITE;
-/*!40000 ALTER TABLE `profissionais` DISABLE KEYS */;
-/*!40000 ALTER TABLE `profissionais` ENABLE KEYS */;
-UNLOCK TABLES;
+DROP TABLE IF EXISTS `recuperacoes_senha`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `recuperacoes_senha` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `usuario_id` int unsigned NOT NULL,
+  `codigo` char(64) NOT NULL,
+  `expira_em` bigint NOT NULL,
+  `verificado` tinyint(1) NOT NULL DEFAULT '0',
+  `criado_em` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `usado_em` datetime DEFAULT NULL,
+  `tentativas` tinyint unsigned NOT NULL DEFAULT '0',
+  `bloqueado_em` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_recuperacoes_senha_usuario_id` (`usuario_id`,`id`),
+  CONSTRAINT `fk_recuperacoes_usuario` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Table structure for table `regras_frequencia`
@@ -145,15 +132,6 @@ CREATE TABLE `regras_frequencia` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `regras_frequencia`
---
-
-LOCK TABLES `regras_frequencia` WRITE;
-/*!40000 ALTER TABLE `regras_frequencia` DISABLE KEYS */;
-/*!40000 ALTER TABLE `regras_frequencia` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `tratamentos`
 --
 
@@ -175,17 +153,8 @@ CREATE TABLE `tratamentos` (
   PRIMARY KEY (`id`),
   KEY `fk_tratamentos_usuario` (`usuario_id`),
   CONSTRAINT `fk_tratamentos_usuario` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `tratamentos`
---
-
-LOCK TABLES `tratamentos` WRITE;
-/*!40000 ALTER TABLE `tratamentos` DISABLE KEYS */;
-/*!40000 ALTER TABLE `tratamentos` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `usuarios`
@@ -202,17 +171,8 @@ CREATE TABLE `usuarios` (
   `criado_em` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_usuarios_email` (`email`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `usuarios`
---
-
-LOCK TABLES `usuarios` WRITE;
-/*!40000 ALTER TABLE `usuarios` DISABLE KEYS */;
-/*!40000 ALTER TABLE `usuarios` ENABLE KEYS */;
-UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -223,4 +183,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-09-11 16:21:35
+-- Dump completed on 2026-10-01 11:18:13
