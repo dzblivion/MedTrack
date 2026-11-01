@@ -172,6 +172,41 @@ CREATE TABLE `usuarios` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_usuarios_email` (`email`)
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- Table structure for table `compartilhamentos`
+
+DROP TABLE IF EXISTS `compartilhamentos`;
+
+CREATE TABLE `compartilhamentos` (
+    `id` int unsigned NOT NULL AUTO_INCREMENT,
+    `tratamento_id` int unsigned NOT NULL,
+    `paciente_usuario_id` int unsigned NOT NULL,
+    `profissional_usuario_id` int unsigned DEFAULT NULL,
+    `codigo_hash` char(64) NOT NULL,
+    `status` enum('pendente','ativo','revogado','expirado')
+        NOT NULL DEFAULT 'pendente',
+    `criado_em` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `expira_em` datetime NOT NULL,
+    `utilizado_em` datetime DEFAULT NULL,
+    `revogado_em` datetime DEFAULT NULL,
+
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uq_compartilhamento_codigo` (`codigo_hash`),
+    KEY `idx_compartilhamento_tratamento`
+        (`tratamento_id`, `status`, `profissional_usuario_id`),
+    KEY `idx_compartilhamento_paciente`
+        (`paciente_usuario_id`, `status`),
+
+    CONSTRAINT `fk_compartilhamento_tratamento`
+        FOREIGN KEY (`tratamento_id`) REFERENCES `tratamentos` (`id`),
+
+    CONSTRAINT `fk_compartilhamento_paciente`
+        FOREIGN KEY (`paciente_usuario_id`) REFERENCES `usuarios` (`id`),
+
+    CONSTRAINT `fk_compartilhamento_profissional`
+        FOREIGN KEY (`profissional_usuario_id`) REFERENCES `usuarios` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 

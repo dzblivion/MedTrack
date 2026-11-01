@@ -5,6 +5,7 @@ from config.mail import mail
 from dotenv import load_dotenv
 from flask import Flask
 from flask_cors import CORS
+from routes.compartilhamento import compartilhamento
 from routes.tratamento import tratamento
 from routes.usuario import usuario
 
@@ -23,7 +24,7 @@ mail.init_app(app)
 
 app.register_blueprint(usuario)
 app.register_blueprint(tratamento)
-
+app.register_blueprint(compartilhamento)
 
 @app.route('/')
 def home():
