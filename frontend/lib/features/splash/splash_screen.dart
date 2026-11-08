@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../app/rotas.dart';
 import '../../theme/app_theme.dart';
@@ -31,12 +32,12 @@ class SplashScreen extends StatelessWidget {
                 const Spacer(flex: 3),
                 const AppLogo(claro: true),
                 const Spacer(flex: 4),
-                const Text(
+                Text(
                   'Acompanhe seu tratamento de\nforma simples e organizada.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
+                  textAlign: TextAlign.left,
+                  style: GoogleFonts.poppins(
                     color: AppColors.darkCiano,
-                    fontSize: 16,
+                    fontSize: 14,
                     fontWeight: FontWeight.w700,
                     height: 1.4,
                   ),
@@ -50,17 +51,17 @@ class SplashScreen extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
+                    Text(
                       'Já tem uma conta? ',
-                      style: TextStyle(color: AppColors.gray, fontSize: 12),
+                      style: GoogleFonts.poppins(color: AppColors.gray, fontSize: 10),
                     ),
                     InkWell(
                       onTap: () => context.go(Rotas.login),
-                      child: const Text(
+                      child: Text(
                         'Entrar',
-                        style: TextStyle(
+                        style: GoogleFonts.poppins(
                           color: AppColors.gray,
-                          fontSize: 12,
+                          fontSize: 10,
                           fontWeight: FontWeight.w700,
                           decoration: TextDecoration.underline,
                         ),

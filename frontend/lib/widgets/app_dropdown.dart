@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../theme/app_theme.dart';
 
@@ -31,23 +32,24 @@ class AppDropdown extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: GoogleFonts.poppins(
             color: AppColors.inputText,
             fontSize: 12,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 5),
         DropdownButtonFormField<String>(
+          menuMaxHeight: 180,
           initialValue: valor,
           onChanged: onChanged,
           validator: validator,
           isExpanded: true,
-          icon: const Icon(Icons.keyboard_arrow_down, size: 20),
-          style: const TextStyle(color: AppColors.inputText, fontSize: 12),
+          icon: Transform.translate(offset: const Offset(10, 0), child: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.gray, size: 18)),
+          style: GoogleFonts.poppins(color: AppColors.gray, fontSize: 10, fontWeight: FontWeight.w400),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: const TextStyle(
+            hintStyle: GoogleFonts.poppins(
               color: AppColors.hintText,
               fontSize: 10,
             ),
@@ -55,20 +57,20 @@ class AppDropdown extends StatelessWidget {
             fillColor: AppColors.field,
             isDense: true,
             contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 8,
+              horizontal: 5,
+              vertical: 3,
             ),
-            errorStyle: const TextStyle(color: AppColors.error, fontSize: 11),
+            errorStyle: GoogleFonts.poppins(color: AppColors.error, fontSize: 10),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(5),
               borderSide: BorderSide.none,
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(5),
               borderSide: const BorderSide(color: AppColors.ciano),
             ),
             errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(5),
               borderSide: const BorderSide(color: AppColors.error),
             ),
           ),

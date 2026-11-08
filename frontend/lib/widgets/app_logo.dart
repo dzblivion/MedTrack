@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../theme/app_theme.dart';
+import 'package:frontend/theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 /// Marca "MedTrack" em duas cores.
 ///
@@ -22,19 +23,19 @@ class AppLogo extends StatelessWidget {
       children: [
         RichText(
           text: TextSpan(
-            style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w800),
+            style: GoogleFonts.poppins(fontSize: 30, fontWeight: FontWeight.w800),
             children: [
               TextSpan(text: 'Med', style: TextStyle(color: corMed)),
               TextSpan(text: 'Track', style: TextStyle(color: corTrack)),
             ],
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 1),
         Text(
           'SEU TRATAMENTO, NO SEU RITMO.',
-          style: TextStyle(
+          style: GoogleFonts.poppins(
             color: corTagline,
-            fontSize: 9,
+            fontSize: 8,
             fontWeight: FontWeight.w600,
             letterSpacing: 1.1,
           ),

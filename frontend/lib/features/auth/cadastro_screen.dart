@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../../app/rotas.dart';
@@ -37,6 +38,8 @@ class _CadastroScreenState extends State<CadastroScreen> {
   String? _ufRegistro;
   bool _aceitaTermos = false;
   bool _carregando = false;
+  bool _senhaVisivel = false;
+  bool _confirmarSenhaVisivel = false;
 
   @override
   void dispose() {
@@ -108,9 +111,9 @@ class _CadastroScreenState extends State<CadastroScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Quero me cadastrar como:',
-              style: TextStyle(
+              style: GoogleFonts.poppins(
                 color: AppColors.inputText,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
@@ -185,8 +188,21 @@ class _CadastroScreenState extends State<CadastroScreen> {
               label: 'Senha',
               hint: 'Digite sua senha',
               controller: _senhaController,
-              obscureText: true,
+              obscureText: !_senhaVisivel,
               textInputAction: TextInputAction.next,
+              suffixIcon: IconButton(
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(
+                  minWidth: 10,
+                  minHeight: 10,
+                ),
+                icon: Icon(
+                  _senhaVisivel ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                  color: AppColors.gray,
+                  size: 14
+                ),
+                onPressed: () => setState(() => _senhaVisivel = !_senhaVisivel),
+              ),
               validator: AuthValidators.novaSenha,
             ),
             const SizedBox(height: 14),
@@ -194,8 +210,21 @@ class _CadastroScreenState extends State<CadastroScreen> {
               label: 'Confirmar senha',
               hint: 'Confirme sua senha',
               controller: _confirmarSenhaController,
-              obscureText: true,
+              obscureText: !_confirmarSenhaVisivel,
               textInputAction: TextInputAction.done,
+              suffixIcon: IconButton(
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(
+                  minWidth: 10,
+                  minHeight: 10,
+                ),
+                icon: Icon(
+                  _confirmarSenhaVisivel ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                  color: AppColors.gray,
+                  size: 14
+                ),
+                onPressed: () => setState(() => _confirmarSenhaVisivel = !_confirmarSenhaVisivel),
+              ),
               validator: AuthValidators.confirmarSenha(
                 () => _senhaController.text,
               ),

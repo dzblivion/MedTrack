@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../theme/app_theme.dart';
 
@@ -36,14 +37,22 @@ class UserTypeToggle extends StatelessWidget {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: ativo ? AppColors.ciano : AppColors.cianoClaro,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.2),
+                blurRadius: 5,
+                offset: const Offset(0, 3),
+              ),
+            ]
+
           ),
           child: Text(
             texto,
-            style: TextStyle(
+            style: GoogleFonts.poppins(
               color: ativo ? Colors.white : AppColors.darkCiano,
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ),

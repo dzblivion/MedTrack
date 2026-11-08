@@ -27,6 +27,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _senhaController = TextEditingController();
 
   bool _carregando = false;
+  bool _senhaVisivel = false;
 
   @override
   void dispose() {
@@ -89,6 +90,20 @@ class _LoginScreenState extends State<LoginScreen> {
               textInputAction: TextInputAction.done,
               validator: AuthValidators.senhaObrigatoria,
               onFieldSubmitted: (_) => _entrar(),
+
+              suffixIcon: IconButton(
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(
+                  minWidth: 10,
+                  minHeight: 10,
+                ),
+                icon: Icon(
+                  _senhaVisivel ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                  color: AppColors.gray,
+                  size: 14
+                ),
+                onPressed: () => setState(() => _senhaVisivel = !_senhaVisivel),
+              ),
             ),
             const SizedBox(height: 20),
             AuthLink(texto: 'Esqueci minha senha', onTap: _esqueciSenha),
