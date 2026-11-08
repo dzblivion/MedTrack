@@ -155,7 +155,7 @@ def resposta_recuperacao_indisponivel():
 def criar_mensagem_recuperacao(email, codigo):
     mensagem = Message(
         subject="Código para redefinir sua senha - MedTrack",
-        sender=os.getenv("MAIL_DEFAULT_SENDER", "dsgncece@gmail.com"),
+        sender=os.getenv("MAIL_DEFAULT_SENDER", "help.medtrack@gmail.com"),
         recipients=[email],
     )
     mensagem.body = (
