@@ -30,29 +30,35 @@ class UserTypeToggle extends StatelessWidget {
     final ativo = tipo == selecionado;
 
     return Expanded(
-      child: GestureDetector(
-        onTap: () => onChanged(tipo),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: ativo ? AppColors.ciano : AppColors.cianoClaro,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.2),
-                blurRadius: 5,
-                offset: const Offset(0, 3),
+      child: AnimatedScale(
+        scale: ativo ? 1.0 : 0.95,
+        duration: const Duration(milliseconds: 200),
+        child: GestureDetector(
+          onTap: () => onChanged(tipo),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeInOut,
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: ativo ? AppColors.ciano : AppColors.cianoClaro,
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.2),
+                  blurRadius: 5,
+                  offset: const Offset(0, 3),
+                ),
+              ]
+        
+            ),
+            child: Text(
+              texto,
+              style: GoogleFonts.poppins(
+                color: ativo ? Colors.white : AppColors.darkCiano,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
               ),
-            ]
-
-          ),
-          child: Text(
-            texto,
-            style: GoogleFonts.poppins(
-              color: ativo ? Colors.white : AppColors.darkCiano,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
             ),
           ),
         ),

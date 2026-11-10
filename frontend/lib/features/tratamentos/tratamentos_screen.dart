@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../../app/rotas.dart';
@@ -42,10 +43,10 @@ class _TratamentosScreenState extends State<TratamentosScreen> {
               nome: nome,
               acao: _BotaoNovo(onPressed: () => _abrir(Rotas.novoTratamento)),
             ),
-            const SizedBox(height: 20),
-            const Text(
+            const SizedBox(height: 25),
+            Text(
               'Meus tratamentos:',
-              style: TextStyle(
+              style: GoogleFonts.poppins(
                 color: AppColors.title,
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
@@ -79,8 +80,9 @@ class _TratamentosScreenState extends State<TratamentosScreen> {
       );
     }
 
-    final lista =
-        _verFinalizados ? controller.finalizados : controller.emAndamento;
+    final lista = _verFinalizados
+        ? controller.finalizados
+        : controller.emAndamento;
     final hoje = DateTime.now();
 
     return RefreshIndicator(
@@ -94,7 +96,7 @@ class _TratamentosScreenState extends State<TratamentosScreen> {
                   texto: _verFinalizados
                       ? 'Nenhum tratamento finalizado.'
                       : 'Nenhum tratamento em andamento.\n'
-                          'Toque em "+ Novo tratamento" para cadastrar.',
+                            'Toque em "+ Novo tratamento" para cadastrar.',
                 ),
               ],
             )
@@ -125,15 +127,20 @@ class _BotaoNovo extends StatelessWidget {
   Widget build(BuildContext context) {
     return FilledButton.icon(
       onPressed: onPressed,
-      icon: const Icon(Icons.add, size: 16),
-      label: const Text('Novo tratamento'),
+      icon: const Icon(Icons.add, size: 14),
+      label: Text('Novo tratamento'),
       style: FilledButton.styleFrom(
         backgroundColor: AppColors.ciano,
         foregroundColor: Colors.white,
-        textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+        shadowColor: Colors.black.withValues(alpha: 0.6),
+        elevation: 8,
+        textStyle: GoogleFonts.poppins(
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+        ),
         padding: const EdgeInsets.symmetric(horizontal: 10),
         minimumSize: const Size(0, 32),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
       ),
     );
   }
@@ -158,21 +165,35 @@ class _Abas extends StatelessWidget {
 
   Widget _aba(String texto, {required bool ativa, required bool valor}) {
     return Expanded(
-      child: GestureDetector(
-        onTap: () => onChanged(valor),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 9),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: ativa ? AppColors.ciano : AppColors.cianoClaro,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Text(
-            texto,
-            style: TextStyle(
-              color: ativa ? Colors.white : AppColors.darkCiano,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
+      child: AnimatedScale(
+        scale: ativa ? 1.0 : 0.97,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+        child: GestureDetector(
+          onTap: () => onChanged(valor),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            curve: Curves.easeInOut,
+            padding: const EdgeInsets.symmetric(vertical: 9),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: ativa ? AppColors.ciano : AppColors.cianoClaro,
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Text(
+              texto,
+              style: GoogleFonts.poppins(
+                color: ativa ? Colors.white : AppColors.darkCiano,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ),

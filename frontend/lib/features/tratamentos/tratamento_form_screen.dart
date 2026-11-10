@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/api/api_client.dart';
@@ -40,7 +41,9 @@ class _TratamentoFormScreenState extends State<TratamentoFormScreen> {
   late final _duracao = TextEditingController(
     text: _inicial?.duracaoDias.toString(),
   );
-  late final _dataTexto = TextEditingController(text: formatarData(_dataInicio));
+  late final _dataTexto = TextEditingController(
+    text: formatarData(_dataInicio),
+  );
 
   late String _unidade = _inicial?.dosagemUnidade ?? 'mg';
   late String _forma = _inicial?.formaConsumo ?? 'oral';
@@ -128,22 +131,68 @@ class _TratamentoFormScreenState extends State<TratamentoFormScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
+        toolbarHeight: 70,
         backgroundColor: AppColors.background,
         foregroundColor: AppColors.darkCiano,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          tooltip: 'Voltar',
-          onPressed: () => context.pop(),
+        leading: Container(
+          margin: EdgeInsets.only(left: 25, top: 25),
+          decoration: BoxDecoration(
+            color: AppColors.cianoClaro,
+            borderRadius: BorderRadius.circular(5),
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            tooltip: 'Voltar',
+            style: IconButton.styleFrom(
+              foregroundColor: AppColors.darkCiano,
+              padding: EdgeInsets.zero,
+              iconSize: 15,
+            ),
+            onPressed: () => context.pop(),
+          ),
         ),
-        title: Text(
-          _editando ? 'Editar tratamento' : 'Novo tratamento',
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+        title: Container(
+          margin: EdgeInsets.only(top: 25, right: 10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _editando ? 'Editar tratamento' : 'Novo tratamento',
+                    style: GoogleFonts.poppins(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.inputText,
+                    ),
+                  ),
+                  Text(
+                    "Vamos cadastrar seu tratamento.",
+                    style: GoogleFonts.poppins(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.gray,
+                    ),
+                  ),
+                ],
+              ),
+              Text(
+                "Etapa 1 de 3",
+                style: GoogleFonts.poppins(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.gray,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
           child: Form(
             key: _formKey,
             child: Column(
@@ -229,11 +278,11 @@ class _TratamentoFormScreenState extends State<TratamentoFormScreen> {
   }
 
   Widget _linha(Widget esquerda, Widget direita) => Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(flex: 3, child: esquerda),
-          const SizedBox(width: 10),
-          Expanded(flex: 2, child: direita),
-        ],
-      );
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Expanded(flex: 3, child: esquerda),
+      const SizedBox(width: 10),
+      Expanded(flex: 2, child: direita),
+    ],
+  );
 }

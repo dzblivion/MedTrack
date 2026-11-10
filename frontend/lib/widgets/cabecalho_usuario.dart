@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../theme/app_theme.dart';
 
@@ -30,15 +31,15 @@ class CabecalhoUsuario extends StatelessWidget {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [AppColors.ciano, AppColors.darkCiano],
+              colors: [AppColors.ciano, Color.fromARGB(255, 25, 136, 139)],
             ),
           ),
           child: Text(
             inicial,
-            style: const TextStyle(
+            style: GoogleFonts.poppins(
               color: Colors.white,
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ),
@@ -47,14 +48,23 @@ class CabecalhoUsuario extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (subtitulo == null)
+                Text(
+                  'Olá,',
+                  style: GoogleFonts.poppins(
+                    color: AppColors.gray,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
               Text(
                 nome,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: GoogleFonts.poppins(
                   color: AppColors.title,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
               if (subtitulo != null)
@@ -62,7 +72,10 @@ class CabecalhoUsuario extends StatelessWidget {
                   subtitulo!,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: AppColors.gray, fontSize: 12),
+                  style: GoogleFonts.poppins(
+                    color: AppColors.gray,
+                    fontSize: 10,
+                  ),
                 ),
             ],
           ),

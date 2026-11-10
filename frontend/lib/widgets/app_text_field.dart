@@ -69,7 +69,7 @@ class AppTextField extends StatelessWidget {
               minHeight: 0,
             ),
             hintText: hint,
-            hintStyle: const TextStyle(
+            hintStyle: GoogleFonts.poppins(
               color: AppColors.hintText,
               fontSize: 10,
             ),
@@ -80,7 +80,7 @@ class AppTextField extends StatelessWidget {
               horizontal: 5,
               vertical: 8,
             ),
-            errorStyle: const TextStyle(color: AppColors.error, fontSize: 10),
+            errorStyle: GoogleFonts.poppins(color: AppColors.error, fontSize: 10),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(5),
               borderSide: BorderSide.none,
