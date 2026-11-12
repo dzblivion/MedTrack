@@ -51,6 +51,22 @@ void main() {
     expect(t.periodoEncerrado(DateTime(2026, 10, 12)), isTrue);
   });
 
+  test('aceita dosagem e duração vazias (uso contínuo)', () {
+    final t = Tratamento.fromJson({
+      ...json,
+      'dosagem_valor': null,
+      'dosagem_unidade': null,
+      'duracao_dias': null,
+    });
+
+    expect(t.dosagem, isNull);
+    expect(t.resumoDosagem, '1 por dose · oral');
+    expect(t.usoContinuo, isTrue);
+    expect(t.dataFim, isNull);
+    expect(t.diaAtual(DateTime(2026, 12, 4)), 61);
+    expect(t.periodoEncerrado(DateTime(2030, 1, 1)), isFalse);
+  });
+
   test('separa os status entre as abas', () {
     expect(StatusTratamento.ativo.emAndamento, isTrue);
     expect(StatusTratamento.pausado.emAndamento, isTrue);

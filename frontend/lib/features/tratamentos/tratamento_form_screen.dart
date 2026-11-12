@@ -4,18 +4,19 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/api/api_client.dart';
-import '../../core/formatos.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_button.dart';
-import '../../widgets/app_dropdown.dart';
 import '../../widgets/app_snackbar.dart';
-import '../../widgets/app_text_field.dart';
-import 'dados_tratamento.dart';
+import 'form/cabecalho_etapa.dart';
+import 'form/etapa_duracao.dart';
+import 'form/etapa_frequencia.dart';
+import 'form/etapa_medicamento.dart';
+import 'form/rascunho_tratamento.dart';
 import 'tratamento.dart';
 import 'tratamento_repository.dart';
-import 'tratamento_validators.dart';
 
-/// Cadastra um tratamento novo ou edita [original]. Ao salvar, volta com `true`.
+/// Cadastra um tratamento novo ou edita [original], em 3 etapas.
+/// Ao salvar, volta com `true`.
 class TratamentoFormScreen extends StatefulWidget {
   final Tratamento? original;
 
@@ -26,81 +27,47 @@ class TratamentoFormScreen extends StatefulWidget {
 }
 
 class _TratamentoFormScreenState extends State<TratamentoFormScreen> {
+  static const _totalEtapas = 3;
+
   final _formKey = GlobalKey<FormState>();
-  late final DadosTratamento? _inicial = widget.original == null
-      ? null
-      : DadosTratamento.de(widget.original!);
-
-  late final _medicamento = TextEditingController(text: _inicial?.medicamento);
-  late final _dosagem = TextEditingController(
-    text: _numeroInicial(_inicial?.dosagemValor),
-  );
-  late final _quantidade = TextEditingController(
-    text: _numeroInicial(_inicial?.quantidadePorDose) ?? '1',
-  );
-  late final _duracao = TextEditingController(
-    text: _inicial?.duracaoDias.toString(),
-  );
-  late final _dataTexto = TextEditingController(
-    text: formatarData(_dataInicio),
-  );
-
-  late String _unidade = _inicial?.dosagemUnidade ?? 'mg';
-  late String _forma = _inicial?.formaConsumo ?? 'oral';
-  late DateTime _dataInicio = _inicial?.dataInicio ?? _hoje();
+  late final _rascunho = RascunhoTratamento(widget.original);
+  int _etapa = 0;
   bool _salvando = false;
 
   bool get _editando => widget.original != null;
-
-  static String? _numeroInicial(double? valor) =>
-      valor == null ? null : formatarNumero(valor);
-
-  static DateTime _hoje() {
-    final agora = DateTime.now();
-    return DateTime(agora.year, agora.month, agora.day);
-  }
+  bool get _ultimaEtapa => _etapa == _totalEtapas - 1;
 
   @override
   void dispose() {
-    _medicamento.dispose();
-    _dosagem.dispose();
-    _quantidade.dispose();
-    _duracao.dispose();
-    _dataTexto.dispose();
+    _rascunho.dispose();
     super.dispose();
   }
 
-  Future<void> _escolherData() async {
-    final escolhida = await showDatePicker(
-      context: context,
-      initialDate: _dataInicio,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
-      helpText: 'Data de início',
-    );
-    if (escolhida == null) return;
+  void _atualizar() => setState(() {});
 
-    setState(() {
-      _dataInicio = escolhida;
-      _dataTexto.text = formatarData(escolhida);
-    });
+  void _voltar() {
+    if (_etapa == 0) {
+      context.pop();
+    } else {
+      setState(() => _etapa--);
+    }
+  }
+
+  /// Valida só a etapa atual antes de seguir.
+  void _avancar() {
+    if (!_formKey.currentState!.validate()) return;
+    FocusScope.of(context).unfocus();
+    if (_ultimaEtapa) {
+      _salvar();
+    } else {
+      setState(() => _etapa++);
+    }
   }
 
   Future<void> _salvar() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    final dados = DadosTratamento(
-      medicamento: _medicamento.text.trim(),
-      dosagemValor: lerNumero(_dosagem.text)!,
-      dosagemUnidade: _unidade,
-      quantidadePorDose: lerNumero(_quantidade.text)!,
-      formaConsumo: _forma,
-      dataInicio: _dataInicio,
-      duracaoDias: int.parse(_duracao.text.trim()),
-    );
-
     setState(() => _salvando = true);
     final repositorio = context.read<TratamentoRepository>();
+    final dados = _rascunho.dados;
 
     try {
       if (_editando) {
@@ -128,161 +95,87 @@ class _TratamentoFormScreenState extends State<TratamentoFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        toolbarHeight: 70,
-        backgroundColor: AppColors.background,
-        foregroundColor: AppColors.darkCiano,
-        elevation: 0,
-        leading: Container(
-          margin: EdgeInsets.only(left: 25, top: 25),
-          decoration: BoxDecoration(
-            color: AppColors.cianoClaro,
-            borderRadius: BorderRadius.circular(5),
-          ),
-          child: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            tooltip: 'Voltar',
-            style: IconButton.styleFrom(
-              foregroundColor: AppColors.darkCiano,
-              padding: EdgeInsets.zero,
-              iconSize: 15,
-            ),
-            onPressed: () => context.pop(),
-          ),
+    final (icone, titulo, subtitulo, conteudo) = switch (_etapa) {
+      0 => (
+          Icons.medication_outlined,
+          _editando ? 'Editar tratamento' : 'Novo tratamento',
+          _editando
+              ? 'Atualize as informações do tratamento.'
+              : 'Vamos cadastrar seu tratamento.',
+          EtapaMedicamento(rascunho: _rascunho, onMudou: _atualizar) as Widget,
         ),
-        title: Container(
-          margin: EdgeInsets.only(top: 25, right: 10),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      1 => (
+          Icons.schedule,
+          'Frequência e horários',
+          'É crucial para o app gerar os lembretes corretamente.',
+          EtapaFrequencia(rascunho: _rascunho, onMudou: _atualizar),
+        ),
+      _ => (
+          Icons.fact_check_outlined,
+          'Duração e revisão',
+          'Confira as informações antes de salvar.',
+          EtapaDuracao(rascunho: _rascunho, onMudou: _atualizar),
+        ),
+    };
+
+    // O "voltar" do sistema também volta uma etapa, em vez de fechar tudo.
+    return PopScope(
+      canPop: _etapa == 0,
+      onPopInvokedWithResult: (saiu, _) {
+        if (!saiu && _etapa > 0) setState(() => _etapa--);
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: SafeArea(
+          child: Column(
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _editando ? 'Editar tratamento' : 'Novo tratamento',
-                    style: GoogleFonts.poppins(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.inputText,
-                    ),
-                  ),
-                  Text(
-                    "Vamos cadastrar seu tratamento.",
-                    style: GoogleFonts.poppins(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.gray,
-                    ),
-                  ),
-                ],
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+                child: CabecalhoEtapa(
+                  etapa: _etapa + 1,
+                  total: _totalEtapas,
+                  icone: icone,
+                  titulo: titulo,
+                  subtitulo: subtitulo,
+                  onVoltar: _voltar,
+                ),
               ),
-              Text(
-                "Etapa 1 de 3",
-                style: GoogleFonts.poppins(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w400,
-                  color: AppColors.gray,
+              Expanded(
+                child: SingleChildScrollView(
+                  // Cada etapa começa do topo.
+                  key: ValueKey(_etapa),
+                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
+                  child: Form(key: _formKey, child: conteudo),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 8, 24, 12),
+                child: Column(
+                  children: [
+                    AppButton(
+                      texto: !_ultimaEtapa
+                          ? 'Continuar'
+                          : _editando
+                              ? 'Salvar alterações'
+                              : 'Salvar tratamento',
+                      carregando: _salvando,
+                      onPressed: _avancar,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      '*Campos obrigatórios',
+                      style: GoogleFonts.poppins(
+                        fontSize: 9,
+                        color: AppColors.gray,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
         ),
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                AppTextField(
-                  label: 'Medicamento',
-                  hint: 'Ex.: Amoxicilina',
-                  controller: _medicamento,
-                  textInputAction: TextInputAction.next,
-                  validator: TratamentoValidators.medicamento,
-                ),
-                const SizedBox(height: 14),
-                _linha(
-                  AppTextField(
-                    label: 'Dosagem',
-                    hint: 'Ex.: 500',
-                    controller: _dosagem,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    validator: TratamentoValidators.numeroPositivo('a dosagem'),
-                  ),
-                  AppDropdown(
-                    label: 'Unidade',
-                    hint: 'Unidade',
-                    valor: _unidade,
-                    opcoes: unidadesDosagem.keys.toList(),
-                    rotulo: (valor) => unidadesDosagem[valor]!,
-                    onChanged: (v) => setState(() => _unidade = v ?? _unidade),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                AppTextField(
-                  label: 'Quantidade por dose',
-                  hint: 'Ex.: 1 (comprimido, cápsula...)',
-                  controller: _quantidade,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  validator: TratamentoValidators.numeroPositivo(
-                    'a quantidade',
-                  ),
-                ),
-                const SizedBox(height: 14),
-                AppDropdown(
-                  label: 'Forma de consumo',
-                  hint: 'Selecione',
-                  valor: _forma,
-                  opcoes: formasConsumo.keys.toList(),
-                  rotulo: (valor) => formasConsumo[valor]!,
-                  onChanged: (v) => setState(() => _forma = v ?? _forma),
-                ),
-                const SizedBox(height: 14),
-                _linha(
-                  AppTextField(
-                    label: 'Data de início',
-                    hint: 'dd/mm/aaaa',
-                    controller: _dataTexto,
-                    onTap: _escolherData,
-                  ),
-                  AppTextField(
-                    label: 'Duração (dias)',
-                    hint: 'Ex.: 7',
-                    controller: _duracao,
-                    keyboardType: TextInputType.number,
-                    textInputAction: TextInputAction.done,
-                    validator: TratamentoValidators.duracao,
-                  ),
-                ),
-                const SizedBox(height: 28),
-                AppButton(
-                  texto: _editando ? 'Salvar alterações' : 'Salvar tratamento',
-                  carregando: _salvando,
-                  onPressed: _salvar,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
-
-  Widget _linha(Widget esquerda, Widget direita) => Row(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Expanded(flex: 3, child: esquerda),
-      const SizedBox(width: 10),
-      Expanded(flex: 2, child: direita),
-    ],
-  );
 }

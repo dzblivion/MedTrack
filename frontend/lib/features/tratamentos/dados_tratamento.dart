@@ -1,15 +1,20 @@
 import '../../core/formatos.dart';
-import 'tratamento.dart';
+import 'frequencia.dart';
 
 /// O que o formulário envia para cadastrar ou editar um tratamento.
 class DadosTratamento {
   final String medicamento;
-  final double dosagemValor;
-  final String dosagemUnidade;
+  final double? dosagemValor;
+  final String? dosagemUnidade;
   final double quantidadePorDose;
   final String formaConsumo;
   final DateTime dataInicio;
-  final int duracaoDias;
+
+  /// Nulo = uso contínuo.
+  final int? duracaoDias;
+
+  /// O backend exige a frequência para gerar as doses.
+  final Frequencia frequencia;
 
   const DadosTratamento({
     required this.medicamento,
@@ -19,25 +24,18 @@ class DadosTratamento {
     required this.formaConsumo,
     required this.dataInicio,
     required this.duracaoDias,
+    required this.frequencia,
   });
-
-  factory DadosTratamento.de(Tratamento t) => DadosTratamento(
-        medicamento: t.medicamento,
-        dosagemValor: t.dosagemValor,
-        dosagemUnidade: t.dosagemUnidade,
-        quantidadePorDose: t.quantidadePorDose,
-        formaConsumo: t.formaConsumo,
-        dataInicio: t.dataInicio,
-        duracaoDias: t.duracaoDias,
-      );
 
   Map<String, dynamic> toJson() => {
         'medicamento': medicamento,
         'dosagem_valor': dosagemValor,
-        'dosagem_unidade': dosagemUnidade,
+        // O backend recusa unidade sem valor.
+        'dosagem_unidade': dosagemValor == null ? null : dosagemUnidade,
         'quantidade_por_dose': quantidadePorDose,
         'forma_consumo': formaConsumo,
         'data_inicio': formatarDataApi(dataInicio),
         'duracao_dias': duracaoDias,
+        'frequencia': frequencia.toJson(dataInicio),
       };
 }

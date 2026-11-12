@@ -25,12 +25,21 @@ class TratamentoCard extends StatelessWidget {
 
   String get _andamento {
     final t = tratamento;
-    if (!t.status.emAndamento) return '${t.duracaoDias} dias';
+    final duracao = t.duracaoDias;
+    if (!t.status.emAndamento) {
+      return duracao == null ? 'uso contínuo' : '$duracao dias';
+    }
     if (t.periodoEncerrado(hoje)) return 'período encerrado';
 
     final dia = t.diaAtual(hoje);
     if (dia == 0) return 'começa em ${formatarDiaMes(t.dataInicio)}';
-    return '$dia de ${t.duracaoDias} dias';
+    return duracao == null ? 'uso contínuo' : '$dia de $duracao dias';
+  }
+
+  String get _periodo {
+    final inicio = formatarDiaMes(tratamento.dataInicio);
+    final fim = tratamento.dataFim;
+    return fim == null ? 'desde $inicio' : '$inicio - ${formatarDiaMes(fim)}';
   }
 
   @override
@@ -91,8 +100,7 @@ class TratamentoCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    '${formatarDiaMes(t.dataInicio)} - '
-                    '${formatarDiaMes(t.dataFim)}',
+                    _periodo,
                     style: const TextStyle(
                       color: AppColors.inputText,
                       fontSize: 12,

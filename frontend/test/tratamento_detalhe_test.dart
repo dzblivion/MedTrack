@@ -41,10 +41,21 @@ void main() {
     expect(find.text('500 mg'), findsOneWidget);
     expect(find.text('Oral'), findsOneWidget);
     expect(
-      find.text('${formatarData(t.dataInicio)} a ${formatarData(t.dataFim)}'),
+      find.text('${formatarData(t.dataInicio)} a ${formatarData(t.dataFim!)}'),
       findsOneWidget,
     );
     expect(find.text('dia 3 de 7'), findsOneWidget);
+  });
+
+  testWidgets('sem dosagem e sem duração: mostra "não informada" e uso contínuo', (
+    tester,
+  ) async {
+    final t = tratamentoExemplo(diasAtras: 4, semDosagem: true, continuo: true);
+    await abrirDetalhe(tester, TratamentoFake([t]));
+
+    expect(find.text('não informada'), findsOneWidget);
+    expect(find.text('desde ${formatarData(t.dataInicio)}'), findsOneWidget);
+    expect(find.text('uso contínuo · dia 5'), findsOneWidget);
   });
 
   testWidgets('ativo: pausar troca para Retomar e a lista recarrega ao voltar', (

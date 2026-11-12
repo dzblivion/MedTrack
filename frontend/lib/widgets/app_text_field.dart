@@ -13,6 +13,7 @@ class AppTextField extends StatelessWidget {
   final TextInputAction? textInputAction;
   final String? Function(String?)? validator;
   final ValueChanged<String>? onFieldSubmitted;
+  final ValueChanged<String>? onChanged;
   final List<TextInputFormatter>? inputFormatters;
   final Iterable<String>? autofillHints;
   final Widget? suffixIcon;
@@ -30,6 +31,7 @@ class AppTextField extends StatelessWidget {
     this.textInputAction,
     this.validator,
     this.onFieldSubmitted,
+    this.onChanged,
     this.inputFormatters,
     this.autofillHints,
     this.onTap,
@@ -57,6 +59,7 @@ class AppTextField extends StatelessWidget {
           textInputAction: textInputAction,
           validator: validator,
           onFieldSubmitted: onFieldSubmitted,
+          onChanged: onChanged,
           inputFormatters: inputFormatters,
           autofillHints: autofillHints,
           readOnly: onTap != null,

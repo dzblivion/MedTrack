@@ -161,9 +161,19 @@ class _TratamentoDetalheScreenState extends State<TratamentoDetalheScreen> {
     if (t == null) return const Center(child: CircularProgressIndicator());
 
     final hoje = DateTime.now();
-    final progresso = t.status.emAndamento && !t.periodoEncerrado(hoje)
-        ? 'dia ${t.diaAtual(hoje)} de ${t.duracaoDias}'
-        : '${t.duracaoDias} dias';
+    final fim = t.dataFim;
+    final duracao = t.duracaoDias;
+    final emCurso = t.status.emAndamento && !t.periodoEncerrado(hoje);
+    final progresso = switch (duracao) {
+      null when emCurso && t.diaAtual(hoje) > 0 =>
+        'uso contínuo · dia ${t.diaAtual(hoje)}',
+      null => 'uso contínuo',
+      _ when emCurso => 'dia ${t.diaAtual(hoje)} de $duracao',
+      _ => '$duracao dias',
+    };
+    final periodo = fim == null
+        ? 'desde ${formatarData(t.dataInicio)}'
+        : '${formatarData(t.dataInicio)} a ${formatarData(fim)}';
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
@@ -184,13 +194,10 @@ class _TratamentoDetalheScreenState extends State<TratamentoDetalheScreen> {
         const SizedBox(height: 20),
         _Informacoes(
           itens: [
-            ('Dosagem', t.dosagem),
+            ('Dosagem', t.dosagem ?? 'não informada'),
             ('Quantidade por dose', formatarNumero(t.quantidadePorDose)),
             ('Forma de consumo', formasConsumo[t.formaConsumo] ?? t.formaConsumo),
-            (
-              'Período',
-              '${formatarData(t.dataInicio)} a ${formatarData(t.dataFim)}',
-            ),
+            ('Período', periodo),
             ('Duração', progresso),
           ],
         ),

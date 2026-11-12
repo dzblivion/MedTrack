@@ -9,6 +9,7 @@ import 'package:frontend/features/auth/auth_repository.dart';
 import 'package:frontend/features/auth/sessao_controller.dart';
 import 'package:frontend/features/auth/usuario.dart';
 import 'package:frontend/features/tratamentos/dados_tratamento.dart';
+import 'package:frontend/features/tratamentos/frequencia.dart';
 import 'package:frontend/features/tratamentos/tratamento.dart';
 import 'package:frontend/features/tratamentos/tratamento_repository.dart';
 import 'package:frontend/main.dart';
@@ -150,6 +151,7 @@ class TratamentoFake extends TratamentoRepository {
                 dataInicio: t.dataInicio,
                 duracaoDias: t.duracaoDias,
                 status: status,
+                frequencia: t.frequencia,
               ),
     ];
   }
@@ -185,18 +187,22 @@ Tratamento tratamentoExemplo({
   StatusTratamento status = StatusTratamento.ativo,
   int diasAtras = 0,
   int duracaoDias = 7,
+  bool semDosagem = false,
+  bool continuo = false,
+  Frequencia? frequencia,
 }) {
   final hoje = DateTime.now();
   return Tratamento(
     id: id,
     medicamento: medicamento,
-    dosagemValor: 500,
-    dosagemUnidade: 'mg',
+    dosagemValor: semDosagem ? null : 500,
+    dosagemUnidade: semDosagem ? null : 'mg',
     quantidadePorDose: 1,
     formaConsumo: 'oral',
     dataInicio: DateTime(hoje.year, hoje.month, hoje.day - diasAtras),
-    duracaoDias: duracaoDias,
+    duracaoDias: continuo ? null : duracaoDias,
     status: status,
+    frequencia: frequencia,
   );
 }
 

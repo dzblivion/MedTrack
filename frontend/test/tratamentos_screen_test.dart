@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:frontend/app/rotas.dart';
 import 'package:frontend/core/api/api_client.dart';
+import 'package:frontend/core/formatos.dart';
 import 'package:frontend/features/tratamentos/tratamento.dart';
 
 import 'helpers.dart';
@@ -82,6 +83,17 @@ void main() {
     expect(find.text('período encerrado'), findsOneWidget);
   });
 
+  testWidgets('uso contínuo sem dosagem aparece sem quebrar a lista', (
+    tester,
+  ) async {
+    final t = tratamentoExemplo(diasAtras: 2, semDosagem: true, continuo: true);
+    await abrirTratamentos(tester, TratamentoFake([t]));
+
+    expect(find.text('1 por dose · oral'), findsOneWidget);
+    expect(find.text('desde ${formatarDiaMes(t.dataInicio)}'), findsOneWidget);
+    expect(find.text('uso contínuo'), findsOneWidget);
+  });
+
   testWidgets('tratamento que ainda não começou mostra a data de início', (
     tester,
   ) async {
@@ -120,7 +132,7 @@ void main() {
     await abrirTratamentos(tester, TratamentoFake([tratamentoExemplo()]));
 
     await tocar(tester, 'Novo tratamento');
-    expect(find.text('Salvar tratamento'), findsOneWidget);
+    expect(find.text('Etapa 1 de 3'), findsOneWidget);
     await tester.tap(find.byTooltip('Voltar'));
     await tester.pumpAndSettle();
 

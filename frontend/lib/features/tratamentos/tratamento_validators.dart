@@ -3,6 +3,7 @@ import '../../core/formatos.dart';
 /// Mesmas regras do backend (routes/tratamento.py), checadas antes de enviar.
 class TratamentoValidators {
   static const limiteDuracao = 3650;
+  static const limiteIntervaloHoras = 24 * limiteDuracao;
 
   static String? medicamento(String? valor) {
     final texto = valor?.trim() ?? '';
@@ -11,9 +12,18 @@ class TratamentoValidators {
     return null;
   }
 
-  static String? Function(String?) numeroPositivo(String rotulo) {
+  /// Para listas de opção: nada escolhido mostra [mensagem].
+  static String? Function(String?) escolha(String mensagem) =>
+      (valor) => valor == null ? mensagem : null;
+
+  static String? Function(String?) numeroPositivo(
+    String rotulo, {
+    bool obrigatorio = true,
+  }) {
     return (valor) {
-      if (valor == null || valor.trim().isEmpty) return 'Informe $rotulo';
+      if (valor == null || valor.trim().isEmpty) {
+        return obrigatorio ? 'Informe $rotulo' : null;
+      }
       final numero = lerNumero(valor);
       if (numero == null) return 'Número inválido';
       if (numero <= 0) return 'Deve ser maior que zero';
@@ -21,11 +31,30 @@ class TratamentoValidators {
     };
   }
 
-  static String? duracao(String? valor) {
-    if (valor == null || valor.trim().isEmpty) return 'Informe a duração';
-    final dias = int.tryParse(valor.trim());
-    if (dias == null || dias < 1 || dias > limiteDuracao) {
-      return 'Entre 1 e $limiteDuracao dias';
+  /// Só é pedida em "Com data de término"; o uso contínuo não tem duração.
+  static String? duracao(String? valor) =>
+      _inteiro(valor, 'Informe a duração', limiteDuracao, 'dias');
+
+  static String? Function(String?) intervalo({required bool emDias}) =>
+      (valor) => emDias
+          ? _inteiro(valor, 'Informe o intervalo', limiteDuracao, 'dias')
+          : _inteiro(
+              valor,
+              'Informe o intervalo',
+              limiteIntervaloHoras,
+              'horas',
+            );
+
+  static String? _inteiro(
+    String? valor,
+    String vazio,
+    int limite,
+    String unidade,
+  ) {
+    if (valor == null || valor.trim().isEmpty) return vazio;
+    final numero = int.tryParse(valor.trim());
+    if (numero == null || numero < 1 || numero > limite) {
+      return 'Entre 1 e $limite $unidade';
     }
     return null;
   }
