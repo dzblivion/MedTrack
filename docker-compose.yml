@@ -36,6 +36,9 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    volumes:
+      - foto_perfil:/app/uploads/perfis
 
 volumes:
   dados_mysql:
+  foto_perfil:

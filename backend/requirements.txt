@@ -14,3 +14,4 @@ Werkzeug==3.1.8
 tzdata==2026.5
 azure-ai-documentintelligence
 google-genai
+Pillow

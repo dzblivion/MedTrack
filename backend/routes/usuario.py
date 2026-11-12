@@ -5,6 +5,7 @@ import os
 import secrets
 import time
 from contextlib import contextmanager
+from html import escape
 from threading import Thread
 
 import bcrypt
@@ -104,9 +105,7 @@ def codigo_recebido_valido(codigo):
 
 
 def codigo_confere(codigo, codigo_hash):
-    return hmac.compare_digest(
-        hash_codigo_recuperacao(codigo), str(codigo_hash)
-    )
+    return hmac.compare_digest(hash_codigo_recuperacao(codigo), str(codigo_hash))
 
 
 def registrar_tentativa_invalida(cursor, recuperacao):
@@ -155,7 +154,7 @@ def resposta_recuperacao_indisponivel():
 def criar_mensagem_recuperacao(email, codigo):
     mensagem = Message(
         subject="Código para redefinir sua senha - MedTrack",
-        sender=os.getenv("MAIL_DEFAULT_SENDER", "help.medtrack@gmail.com"),
+        sender=("MedTrack", os.getenv("MAIL_DEFAULT_SENDER", "dsgncece@gmail.com")),
         recipients=[email],
     )
     mensagem.body = (
@@ -336,7 +335,9 @@ def login():
         return jsonify({"erro": "E-mail ou senha incorretos!"}), 401
 
     senha_hash = usuario_encontrado["senha_hash"]
-    senha_hash = senha_hash.encode("utf-8") if isinstance(senha_hash, str) else senha_hash
+    senha_hash = (
+        senha_hash.encode("utf-8") if isinstance(senha_hash, str) else senha_hash
+    )
     try:
         senha_correta = bcrypt.checkpw(senha.encode("utf-8"), senha_hash)
     except (TypeError, ValueError):
@@ -443,7 +444,9 @@ def verificar_codigo():
     codigo = codigo_recebido_valido(dados.get("codigo"))
 
     if not email or not codigo:
-        return jsonify({"erro": "E-mail e código de seis dígitos são obrigatórios!"}), 400
+        return jsonify(
+            {"erro": "E-mail e código de seis dígitos são obrigatórios!"}
+        ), 400
 
     try:
         with sessao_banco() as (_, cursor):
@@ -460,7 +463,9 @@ def verificar_codigo():
                 return jsonify({"erro": "Código expirado!"}), 400
 
             if int(recuperacao["tentativas"]) >= LIMITE_TENTATIVAS_CODIGO:
-                return jsonify({"erro": "Código bloqueado por excesso de tentativas!"}), 429
+                return jsonify(
+                    {"erro": "Código bloqueado por excesso de tentativas!"}
+                ), 429
 
             if not codigo_confere(codigo, recuperacao["codigo"]):
                 if registrar_tentativa_invalida(cursor, recuperacao):
@@ -489,9 +494,7 @@ def redefinir_senha():
     nova_senha = dados.get("nova_senha")
 
     if not email or not codigo or not isinstance(nova_senha, str) or not nova_senha:
-        return jsonify(
-            {"erro": "E-mail, código e nova senha são obrigatórios!"}
-        ), 400
+        return jsonify({"erro": "E-mail, código e nova senha são obrigatórios!"}), 400
     if len(nova_senha) < 8:
         return jsonify({"erro": "Senha deve ter pelo menos 8 caracteres!"}), 400
 
@@ -510,7 +513,9 @@ def redefinir_senha():
                 return jsonify({"erro": "Código expirado!"}), 400
 
             if int(recuperacao["tentativas"]) >= LIMITE_TENTATIVAS_CODIGO:
-                return jsonify({"erro": "Código bloqueado por excesso de tentativas!"}), 429
+                return jsonify(
+                    {"erro": "Código bloqueado por excesso de tentativas!"}
+                ), 429
 
             if not codigo_confere(codigo, recuperacao["codigo"]):
                 if registrar_tentativa_invalida(cursor, recuperacao):

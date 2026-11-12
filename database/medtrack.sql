@@ -169,6 +169,12 @@ CREATE TABLE `usuarios` (
   `email` varchar(150) NOT NULL,
   `senha_hash` varchar(255) NOT NULL,
   `criado_em` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `foto_perfil` VARCHAR(255) NULL,
+  `email_verificado` BOOLEAN NOT NULL DEFAULT FALSE,
+  `token_verificado` CHAR(64) NULL,
+  `verificaacao_expira_em` BIGINT NULL,
+  `tentativas_verificacao` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  `verificacao_enviado_em` BIGINT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_usuarios_email` (`email`)
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
