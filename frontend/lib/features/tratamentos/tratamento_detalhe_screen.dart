@@ -197,6 +197,8 @@ class _TratamentoDetalheScreenState extends State<TratamentoDetalheScreen> {
             ('Dosagem', t.dosagem ?? 'não informada'),
             ('Quantidade por dose', formatarNumero(t.quantidadePorDose)),
             ('Forma de consumo', formasConsumo[t.formaConsumo] ?? t.formaConsumo),
+            // Só tratamentos de antes da frequência ser obrigatória ficam sem.
+            ('Frequência', t.frequencia?.descricao ?? 'não cadastrada'),
             ('Período', periodo),
             ('Duração', progresso),
           ],

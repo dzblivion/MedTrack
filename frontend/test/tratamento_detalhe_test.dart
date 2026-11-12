@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend/app/rotas.dart';
 import 'package:frontend/core/api/api_client.dart';
 import 'package:frontend/core/formatos.dart';
+import 'package:frontend/features/tratamentos/frequencia.dart';
 import 'package:frontend/features/tratamentos/tratamento.dart';
 
 import 'helpers.dart';
@@ -54,8 +55,23 @@ void main() {
     await abrirDetalhe(tester, TratamentoFake([t]));
 
     expect(find.text('não informada'), findsOneWidget);
+    expect(find.text('não cadastrada'), findsOneWidget);
     expect(find.text('desde ${formatarData(t.dataInicio)}'), findsOneWidget);
     expect(find.text('uso contínuo · dia 5'), findsOneWidget);
+  });
+
+  testWidgets('mostra a frequência com os horários', (tester) async {
+    final t = tratamentoExemplo(
+      frequencia: const Frequencia(
+        tipo: TipoFrequencia.intervaloHoras,
+        horarios: ['06:00'],
+        intervaloValor: 8,
+      ),
+    );
+    await abrirDetalhe(tester, TratamentoFake([t]));
+
+    expect(find.text('Frequência'), findsOneWidget);
+    expect(find.text('A cada 8 horas · início às 06:00'), findsOneWidget);
   });
 
   testWidgets('ativo: pausar troca para Retomar e a lista recarrega ao voltar', (
