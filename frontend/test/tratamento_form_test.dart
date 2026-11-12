@@ -37,7 +37,7 @@ void main() {
   Future<void> escolher(WidgetTester tester, String atual, String opcao) async {
     final lista = find.ancestor(
       of: find.text(atual),
-      matching: find.byType(DropdownButtonFormField<String>),
+      matching: find.byType(DropdownMenuFormField<String>),
     );
     await tester.ensureVisible(lista);
     await tester.tap(lista);

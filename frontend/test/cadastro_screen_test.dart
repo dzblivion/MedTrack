@@ -118,14 +118,14 @@ void main() {
     await tester.enterText(find.byType(TextFormField).at(0), 'Dra. Ana');
     await tester.enterText(find.byType(TextFormField).at(1), 'ana@m.com');
 
-    await tester.tap(find.byType(DropdownButtonFormField<String>).first);
+    await tester.tap(find.byType(DropdownMenuFormField<String>).first);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Médico(a)').last);
     await tester.pumpAndSettle();
 
     await tester.enterText(find.byType(TextFormField).at(2), 'CRM1234');
 
-    final dropdownUf = find.byType(DropdownButtonFormField<String>).last;
+    final dropdownUf = find.byType(DropdownMenuFormField<String>).last;
     await tester.ensureVisible(dropdownUf);
     await tester.tap(dropdownUf);
     await tester.pumpAndSettle();

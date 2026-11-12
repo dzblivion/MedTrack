@@ -127,20 +127,22 @@ class _BotaoNovo extends StatelessWidget {
   Widget build(BuildContext context) {
     return FilledButton.icon(
       onPressed: onPressed,
-      icon: const Icon(Icons.add, size: 14),
+      icon: const Icon(Icons.add, size: 16),
       label: Text('Novo tratamento'),
       style: FilledButton.styleFrom(
         backgroundColor: AppColors.ciano,
         foregroundColor: Colors.white,
         shadowColor: Colors.black.withValues(alpha: 0.6),
-        elevation: 8,
+        elevation: 6,
         textStyle: GoogleFonts.poppins(
-          fontSize: 10,
+          fontSize: 11.5,
           fontWeight: FontWeight.w600,
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 10),
-        minimumSize: const Size(0, 32),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+        // Em formato de pílula, na proporção do avatar (48) ao lado.
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        minimumSize: const Size(0, 36),
+        visualDensity: VisualDensity.standard,
+        shape: const StadiumBorder(),
       ),
     );
   }

@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../theme/app_theme.dart';
 
+/// Lista de opções com o visual dos campos do app. O menu abre logo abaixo
+/// do campo (o DropdownButton padrão abria por cima dele).
 class AppDropdown extends StatelessWidget {
   final String label;
   final String hint;
@@ -27,6 +29,12 @@ class AppDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bordaArredondada = BorderRadius.circular(5);
+    OutlineInputBorder borda([Color? cor]) => OutlineInputBorder(
+          borderRadius: bordaArredondada,
+          borderSide: cor == null ? BorderSide.none : BorderSide(color: cor),
+        );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -39,49 +47,82 @@ class AppDropdown extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 5),
-        DropdownButtonFormField<String>(
-          menuMaxHeight: 180,
-          initialValue: valor,
-          onChanged: onChanged,
+        DropdownMenuFormField<String>(
+          initialSelection: valor,
+          onSelected: onChanged,
           validator: validator,
-          isExpanded: true,
-          icon: Transform.translate(offset: const Offset(10, 0), child: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.gray, size: 18)),
-          style: GoogleFonts.poppins(color: AppColors.gray, fontSize: 10, fontWeight: FontWeight.w400),
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: GoogleFonts.poppins(
-              color: AppColors.hintText,
-              fontSize: 10,
+          hintText: hint,
+          // Ocupa a largura toda e não deixa digitar: só escolher.
+          expandedInsets: EdgeInsets.zero,
+          selectOnly: true,
+          requestFocusOnTap: false,
+          menuHeight: 180,
+          alignmentOffset: const Offset(0, 4),
+          textStyle: GoogleFonts.poppins(
+            color: AppColors.inputText,
+            fontSize: 10,
+          ),
+          // Seta simples (sem o botão redondo padrão), para o campo ter a
+          // mesma altura dos campos de texto.
+          decorationBuilder: (context, menu) => InputDecoration(
+            suffixIcon: Icon(
+              menu.isOpen
+                  ? Icons.keyboard_arrow_up_rounded
+                  : Icons.keyboard_arrow_down_rounded,
+              color: AppColors.gray,
+              size: 18,
             ),
+          ),
+          inputDecorationTheme: InputDecorationThemeData(
             filled: true,
             fillColor: AppColors.field,
             isDense: true,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 5,
-              vertical: 3,
+              vertical: 8,
             ),
-            errorStyle: GoogleFonts.poppins(color: AppColors.error, fontSize: 10),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(5),
-              borderSide: BorderSide.none,
+            suffixIconConstraints: const BoxConstraints(
+              minWidth: 30,
+              minHeight: 0,
             ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(5),
-              borderSide: const BorderSide(color: AppColors.ciano),
+            hintStyle: GoogleFonts.poppins(
+              color: AppColors.hintText,
+              fontSize: 10,
             ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(5),
-              borderSide: const BorderSide(color: AppColors.error),
+            errorStyle: GoogleFonts.poppins(
+              color: AppColors.error,
+              fontSize: 10,
+            ),
+            border: borda(),
+            enabledBorder: borda(),
+            focusedBorder: borda(AppColors.ciano),
+            errorBorder: borda(AppColors.error),
+            focusedErrorBorder: borda(AppColors.error),
+          ),
+          menuStyle: MenuStyle(
+            backgroundColor: const WidgetStatePropertyAll(AppColors.surface),
+            surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
+            elevation: const WidgetStatePropertyAll(4),
+            padding: const WidgetStatePropertyAll(
+              EdgeInsets.symmetric(vertical: 4),
+            ),
+            shape: WidgetStatePropertyAll(
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
           ),
-          items: opcoes
-              .map(
-                (o) => DropdownMenuItem(
-                  value: o,
-                  child: Text(rotulo?.call(o) ?? o),
+          dropdownMenuEntries: [
+            for (final opcao in opcoes)
+              DropdownMenuEntry(
+                value: opcao,
+                label: rotulo?.call(opcao) ?? opcao,
+                style: MenuItemButton.styleFrom(
+                  foregroundColor: AppColors.inputText,
+                  textStyle: GoogleFonts.poppins(fontSize: 11),
+                  minimumSize: const Size.fromHeight(36),
+                  visualDensity: VisualDensity.compact,
                 ),
-              )
-              .toList(),
+              ),
+          ],
         ),
       ],
     );
