@@ -17,6 +17,7 @@ class HomeController extends ChangeNotifier {
   String? _erro;
   int? _registrando;
   bool _descartado = false;
+  int _buscas = 0;
 
   /// Redesenha de tempos em tempos para "atrasada" e os botões acompanharem
   /// o relógio sem precisar recarregar.
@@ -57,20 +58,28 @@ class HomeController extends ChangeNotifier {
   bool get semDoses => _doses.isEmpty;
 
   Future<void> carregar() async {
+    // Se outra busca começar no meio desta (ex.: tocar em Início enquanto
+    // carrega), só a mais recente vale; a antiga não sobrescreve.
+    final busca = ++_buscas;
     _carregando = true;
     _erro = null;
     _avisar();
 
+    List<Dose>? doses;
+    String? erro;
     try {
-      _doses = await _repositorio.doDia(agora);
+      doses = await _repositorio.doDia(agora);
     } on ApiException catch (e) {
-      _erro = e.mensagem;
+      erro = e.mensagem;
     } catch (_) {
-      _erro = 'Não foi possível carregar as doses de hoje.';
-    } finally {
-      _carregando = false;
-      _avisar();
+      erro = 'Não foi possível carregar as doses de hoje.';
     }
+
+    if (busca != _buscas) return;
+    if (doses != null) _doses = doses;
+    _erro = erro;
+    _carregando = false;
+    _avisar();
   }
 
   /// Registra e recarrega. Erros da API sobem para a tela mostrar.
