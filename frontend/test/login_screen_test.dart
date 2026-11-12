@@ -16,6 +16,29 @@ void main() {
     expect(find.text('Entrar'), findsOneWidget);
   });
 
+  testWidgets('o olho mostra e esconde a senha', (tester) async {
+    await abrirApp(tester, rota: Rotas.login);
+
+    bool senhaEscondida() => tester
+        .widget<EditableText>(
+          find.descendant(
+            of: find.byType(TextFormField).at(1),
+            matching: find.byType(EditableText),
+          ),
+        )
+        .obscureText;
+
+    expect(senhaEscondida(), isTrue);
+
+    await tester.tap(find.byIcon(Icons.visibility_off_outlined));
+    await tester.pumpAndSettle();
+    expect(senhaEscondida(), isFalse);
+
+    await tester.tap(find.byIcon(Icons.visibility_outlined));
+    await tester.pumpAndSettle();
+    expect(senhaEscondida(), isTrue);
+  });
+
   testWidgets('valida campos vazios antes de chamar a API', (tester) async {
     final auth = AuthFake();
     await abrirApp(tester, auth: auth, rota: Rotas.login);

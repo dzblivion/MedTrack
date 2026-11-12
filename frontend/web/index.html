@@ -31,6 +31,16 @@
 
   <title>frontend</title>
   <link rel="manifest" href="manifest.json">
+
+  <!-- O Edge desenha um "olho" próprio nos campos de senha, por cima do
+       campo invisível que o Flutter usa. O app já tem o seu olho, então
+       escondemos o do navegador (e o "x" de limpar, pelo mesmo motivo). -->
+  <style>
+    input::-ms-reveal,
+    input::-ms-clear {
+      display: none;
+    }
+  </style>
 </head>
 <body>
   <!--

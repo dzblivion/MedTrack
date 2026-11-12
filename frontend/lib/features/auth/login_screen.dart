@@ -86,7 +86,7 @@ class _LoginScreenState extends State<LoginScreen> {
               label: 'Senha',
               hint: 'Digite sua senha',
               controller: _senhaController,
-              obscureText: true,
+              obscureText: !_senhaVisivel,
               textInputAction: TextInputAction.done,
               validator: AuthValidators.senhaObrigatoria,
               onFieldSubmitted: (_) => _entrar(),
