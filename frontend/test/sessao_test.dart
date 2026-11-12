@@ -13,7 +13,7 @@ void main() {
   ) async {
     await abrirApp(tester, storage: storageComSessao(daquiUmaHora));
 
-    expect(find.text('Olá, Maria!'), findsOneWidget);
+    expect(find.text('Seu tratamento de hoje:'), findsOneWidget);
     expect(find.text('Começar'), findsNothing);
   });
 
@@ -42,7 +42,7 @@ void main() {
       rota: Rotas.login,
     );
 
-    expect(find.text('Olá, Maria!'), findsOneWidget);
+    expect(find.text('Seu tratamento de hoje:'), findsOneWidget);
   });
 
   testWidgets('o menu de baixo troca de aba', (tester) async {
@@ -50,13 +50,13 @@ void main() {
 
     await tocar(tester, 'Tratamentos');
     expect(find.text('Meus tratamentos:'), findsOneWidget);
-    expect(find.text('Olá, Maria!'), findsNothing);
+    expect(find.text('Seu tratamento de hoje:'), findsNothing);
 
     await tocar(tester, 'Histórico');
     expect(find.text('Em construção'), findsOneWidget);
 
     await tocar(tester, 'Início');
-    expect(find.text('Olá, Maria!'), findsOneWidget);
+    expect(find.text('Seu tratamento de hoje:'), findsOneWidget);
   });
 
   testWidgets('Sair da conta apaga a sessão e volta para o login', (

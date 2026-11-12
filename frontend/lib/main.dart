@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
@@ -9,6 +10,7 @@ import 'core/api/api_client.dart';
 import 'core/storage/session_storage.dart';
 import 'features/auth/auth_repository.dart';
 import 'features/auth/sessao_controller.dart';
+import 'features/doses/dose_repository.dart';
 import 'features/tratamentos/tratamento_repository.dart';
 import 'theme/app_theme.dart';
 
@@ -18,6 +20,7 @@ Future<void> main() async {
   final api = ApiClient();
   final auth = AuthRepository(api);
   final sessao = SessaoController(auth, SessionStorage(), api);
+  final tratamentos = TratamentoRepository(api);
   await sessao.restaurar();
 
   runApp(
@@ -25,7 +28,8 @@ Future<void> main() async {
       api: api,
       auth: auth,
       sessao: sessao,
-      tratamentos: TratamentoRepository(api),
+      tratamentos: tratamentos,
+      doses: DoseRepository(api, tratamentos),
     ),
   );
 }
@@ -35,6 +39,7 @@ class MedTrackApp extends StatefulWidget {
   final AuthRepository auth;
   final SessaoController sessao;
   final TratamentoRepository tratamentos;
+  final DoseRepository doses;
   final String rotaInicial;
 
   const MedTrackApp({
@@ -43,6 +48,7 @@ class MedTrackApp extends StatefulWidget {
     required this.auth,
     required this.sessao,
     required this.tratamentos,
+    required this.doses,
     this.rotaInicial = Rotas.splash,
   });
 
@@ -69,6 +75,7 @@ class _MedTrackAppState extends State<MedTrackApp> {
         Provider.value(value: widget.api),
         Provider.value(value: widget.auth),
         Provider.value(value: widget.tratamentos),
+        Provider.value(value: widget.doses),
         ChangeNotifierProvider.value(value: widget.sessao),
       ],
       child: MaterialApp.router(
@@ -76,6 +83,11 @@ class _MedTrackAppState extends State<MedTrackApp> {
         title: 'MedTrack',
         theme: AppTheme.lightTheme,
         routerConfig: _router,
+        // No navegador, o Flutter só deixa arrastar a tela com o dedo. Com
+        // isso o mouse também arrasta (ex.: puxar para baixo para atualizar).
+        scrollBehavior: const MaterialScrollBehavior().copyWith(
+          dragDevices: PointerDeviceKind.values.toSet(),
+        ),
         // Calendário, botões e textos prontos do Flutter em português.
         locale: const Locale('pt', 'BR'),
         supportedLocales: const [Locale('pt', 'BR')],

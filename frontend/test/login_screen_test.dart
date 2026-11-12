@@ -16,6 +16,16 @@ void main() {
     expect(find.text('Entrar'), findsOneWidget);
   });
 
+  testWidgets('o campo de senha tem a mesma altura do e-mail', (tester) async {
+    await abrirApp(tester, rota: Rotas.login);
+
+    final campos = find.byType(TextFormField);
+    expect(
+      tester.getSize(campos.at(1)).height,
+      tester.getSize(campos.at(0)).height,
+    );
+  });
+
   testWidgets('o olho mostra e esconde a senha', (tester) async {
     await abrirApp(tester, rota: Rotas.login);
 
@@ -85,7 +95,7 @@ void main() {
     await tester.enterText(find.byType(TextFormField).at(1), '12345678');
     await tocar(tester, 'Entrar');
 
-    expect(find.text('Olá, Maria!'), findsOneWidget);
+    expect(find.text('Seu tratamento de hoje:'), findsOneWidget);
     expect(storage.salva?.token, 'token-da-maria');
     expect(api.token, 'token-da-maria');
   });

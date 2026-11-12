@@ -8,6 +8,8 @@ import '../features/auth/recuperar_senha/nova_senha_screen.dart';
 import '../features/auth/recuperar_senha/solicitar_codigo_screen.dart';
 import '../features/auth/recuperar_senha/verificar_codigo_screen.dart';
 import '../features/auth/sessao_controller.dart';
+import '../features/doses/dose_repository.dart';
+import '../features/home/home_controller.dart';
 import '../features/home/home_screen.dart';
 import '../features/perfil/perfil_screen.dart';
 import '../features/perfil/texto_legal_screen.dart';
@@ -99,7 +101,13 @@ GoRouter criarRouter(
         ),
       ),
       StatefulShellRoute.indexedStack(
-        builder: (context, state, navegacao) => AppShell(navegacao: navegacao),
+        // A Home fica acima do menu para o menu poder recarregá-la ao abrir
+        // a aba Início (ex.: depois de cadastrar um tratamento).
+        builder: (context, state, navegacao) => ChangeNotifierProvider(
+          create: (context) =>
+              HomeController(context.read<DoseRepository>())..carregar(),
+          child: AppShell(navegacao: navegacao),
+        ),
         branches: [
           StatefulShellBranch(
             routes: [

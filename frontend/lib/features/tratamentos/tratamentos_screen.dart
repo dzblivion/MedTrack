@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../../app/rotas.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/botao_cabecalho.dart';
 import '../../widgets/cabecalho_usuario.dart';
 import '../auth/sessao_controller.dart';
 import 'tratamento.dart';
@@ -41,7 +42,10 @@ class _TratamentosScreenState extends State<TratamentosScreen> {
           children: [
             CabecalhoUsuario(
               nome: nome,
-              acao: _BotaoNovo(onPressed: () => _abrir(Rotas.novoTratamento)),
+              acao: BotaoCabecalho(
+                texto: 'Novo tratamento',
+                onPressed: () => _abrir(Rotas.novoTratamento),
+              ),
             ),
             const SizedBox(height: 25),
             Text(
@@ -114,36 +118,6 @@ class _TratamentosScreenState extends State<TratamentosScreen> {
                 );
               },
             ),
-    );
-  }
-}
-
-class _BotaoNovo extends StatelessWidget {
-  final VoidCallback onPressed;
-
-  const _BotaoNovo({required this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    return FilledButton.icon(
-      onPressed: onPressed,
-      icon: const Icon(Icons.add, size: 16),
-      label: Text('Novo tratamento'),
-      style: FilledButton.styleFrom(
-        backgroundColor: AppColors.ciano,
-        foregroundColor: Colors.white,
-        shadowColor: Colors.black.withValues(alpha: 0.6),
-        elevation: 6,
-        textStyle: GoogleFonts.poppins(
-          fontSize: 11.5,
-          fontWeight: FontWeight.w600,
-        ),
-        // Em formato de pílula, na proporção do avatar (48) ao lado.
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        minimumSize: const Size(0, 36),
-        visualDensity: VisualDensity.standard,
-        shape: const StadiumBorder(),
-      ),
     );
   }
 }

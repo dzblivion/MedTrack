@@ -8,6 +8,8 @@ import 'package:frontend/core/storage/session_storage.dart';
 import 'package:frontend/features/auth/auth_repository.dart';
 import 'package:frontend/features/auth/sessao_controller.dart';
 import 'package:frontend/features/auth/usuario.dart';
+import 'package:frontend/features/doses/dose.dart';
+import 'package:frontend/features/doses/dose_repository.dart';
 import 'package:frontend/features/tratamentos/dados_tratamento.dart';
 import 'package:frontend/features/tratamentos/frequencia.dart';
 import 'package:frontend/features/tratamentos/tratamento.dart';
@@ -180,6 +182,60 @@ class TratamentoFake extends TratamentoRepository {
   }
 }
 
+/// Doses falsas. [erro] faz a próxima busca falhar; registrar muda o status.
+class DoseFake extends DoseRepository {
+  List<Dose> doses;
+  ApiException? erro;
+  ApiException? erroRegistrar;
+  int buscas = 0;
+  final registros = <({int id, bool tomada})>[];
+
+  DoseFake([this.doses = const []]) : super(ApiClient(), TratamentoFake());
+
+  @override
+  Future<List<Dose>> doDia(DateTime dia) async {
+    buscas++;
+    final falha = erro;
+    if (falha != null) {
+      erro = null;
+      throw falha;
+    }
+    return doses;
+  }
+
+  @override
+  Future<void> registrar(int id, {required bool tomada}) async {
+    if (erroRegistrar != null) throw erroRegistrar!;
+    registros.add((id: id, tomada: tomada));
+    doses = [
+      for (final d in doses)
+        d.id != id
+            ? d
+            : doseExemplo(
+                id: d.id,
+                medicamento: d.medicamento,
+                em: d.agendadaPara,
+                status: tomada ? StatusDose.tomada : StatusDose.naoTomada,
+              ),
+    ];
+  }
+}
+
+Dose doseExemplo({
+  int id = 1,
+  String medicamento = 'Amoxicilina',
+  required DateTime em,
+  StatusDose status = StatusDose.pendente,
+}) =>
+    Dose(
+      id: id,
+      tratamentoId: 1,
+      medicamento: medicamento,
+      detalhe: '500 mg · 1 por dose',
+      agendadaPara: em,
+      status: status,
+    );
+
 /// Tratamento de exemplo que começou há [diasAtras] dias.
 Tratamento tratamentoExemplo({
   int id = 1,
@@ -228,6 +284,7 @@ Future<SessaoController> abrirApp(
   ApiClient? api,
   StorageMemoria? storage,
   TratamentoRepository? tratamentos,
+  DoseRepository? doses,
   String rota = Rotas.splash,
 }) async {
   final apiUsada = api ?? ApiClient();
@@ -245,6 +302,7 @@ Future<SessaoController> abrirApp(
       auth: authUsado,
       sessao: sessao,
       tratamentos: tratamentos ?? TratamentoFake(),
+      doses: doses ?? DoseFake(),
       rotaInicial: rota,
     ),
   );

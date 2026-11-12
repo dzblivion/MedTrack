@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
+import '../features/home/home_controller.dart';
 import '../theme/app_theme.dart';
 
 /// Estrutura do app logado: a aba aberta + o menu inferior do protótipo.
@@ -16,7 +18,12 @@ class AppShell extends StatelessWidget {
     (icone: Icons.account_circle_outlined, rotulo: 'Perfil'),
   ];
 
-  void _abrir(int indice) {
+  static const _inicio = 0;
+
+  void _abrir(BuildContext context, int indice) {
+    // Abrir o Início sempre traz as doses atualizadas.
+    if (indice == _inicio) context.read<HomeController>().carregar();
+
     // Tocar na aba já aberta volta para o começo dela.
     navegacao.goBranch(
       indice,
@@ -45,7 +52,7 @@ class AppShell extends StatelessWidget {
                     icone: _itens[i].icone,
                     rotulo: _itens[i].rotulo,
                     ativo: i == navegacao.currentIndex,
-                    onTap: () => _abrir(i),
+                    onTap: () => _abrir(context, i),
                   ),
                 ),
             ],
