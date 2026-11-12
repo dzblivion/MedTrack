@@ -13,6 +13,7 @@ import 'auth_validators.dart';
 import 'sessao_controller.dart';
 import 'widgets/auth_layout.dart';
 import 'widgets/auth_link.dart';
+import 'widgets/olho_senha.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -90,18 +91,8 @@ class _LoginScreenState extends State<LoginScreen> {
               textInputAction: TextInputAction.done,
               validator: AuthValidators.senhaObrigatoria,
               onFieldSubmitted: (_) => _entrar(),
-
-              suffixIcon: IconButton(
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(
-                  minWidth: 10,
-                  minHeight: 10,
-                ),
-                icon: Icon(
-                  _senhaVisivel ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                  color: AppColors.gray,
-                  size: 14
-                ),
+              suffixIcon: OlhoSenha(
+                visivel: _senhaVisivel,
                 onPressed: () => setState(() => _senhaVisivel = !_senhaVisivel),
               ),
             ),

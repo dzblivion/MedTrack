@@ -15,6 +15,7 @@ import 'auth_validators.dart';
 import 'br_estados.dart';
 import 'profissoes_saude.dart';
 import 'widgets/auth_layout.dart';
+import 'widgets/olho_senha.dart';
 import 'widgets/terms_checkbox.dart';
 import 'widgets/user_type_toggle.dart';
 
@@ -190,17 +191,8 @@ class _CadastroScreenState extends State<CadastroScreen> {
               controller: _senhaController,
               obscureText: !_senhaVisivel,
               textInputAction: TextInputAction.next,
-              suffixIcon: IconButton(
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(
-                  minWidth: 10,
-                  minHeight: 10,
-                ),
-                icon: Icon(
-                  _senhaVisivel ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                  color: AppColors.gray,
-                  size: 14
-                ),
+              suffixIcon: OlhoSenha(
+                visivel: _senhaVisivel,
                 onPressed: () => setState(() => _senhaVisivel = !_senhaVisivel),
               ),
               validator: AuthValidators.novaSenha,
@@ -212,18 +204,11 @@ class _CadastroScreenState extends State<CadastroScreen> {
               controller: _confirmarSenhaController,
               obscureText: !_confirmarSenhaVisivel,
               textInputAction: TextInputAction.done,
-              suffixIcon: IconButton(
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(
-                  minWidth: 10,
-                  minHeight: 10,
+              suffixIcon: OlhoSenha(
+                visivel: _confirmarSenhaVisivel,
+                onPressed: () => setState(
+                  () => _confirmarSenhaVisivel = !_confirmarSenhaVisivel,
                 ),
-                icon: Icon(
-                  _confirmarSenhaVisivel ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                  color: AppColors.gray,
-                  size: 14
-                ),
-                onPressed: () => setState(() => _confirmarSenhaVisivel = !_confirmarSenhaVisivel),
               ),
               validator: AuthValidators.confirmarSenha(
                 () => _senhaController.text,
