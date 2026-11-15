@@ -45,7 +45,7 @@ CREATE TABLE `doses` (
   `status` enum('pendente','tomada','nao_tomada') NOT NULL DEFAULT 'pendente',
   `registrada_em` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `idx_doses_tratamento_data` (`tratamento_id`,`agendada_para`),
+  UNIQUE KEY `uq_doses_tratamento_agendada` (`tratamento_id`,`agendada_para`),
   CONSTRAINT `fk_doses_tratamento` FOREIGN KEY (`tratamento_id`) REFERENCES `tratamentos` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -84,6 +84,29 @@ CREATE TABLE `profissionais` (
   UNIQUE KEY `uk_profissionais_usuario` (`usuario_id`),
   CONSTRAINT `fk_profissionais_usuario` FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `recuperacoes_senha`
+--
+
+--
+-- Table structure for table `confirmacoes_cadastro`
+--
+
+DROP TABLE IF EXISTS `confirmacoes_cadastro`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `confirmacoes_cadastro` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `email` varchar(150) NOT NULL,
+  `codigo` char(64) NOT NULL,
+  `expira_em` bigint NOT NULL,
+  `tentativas` tinyint unsigned NOT NULL DEFAULT '0',
+  `criado_em` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_confirmacoes_cadastro_email` (`email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -170,11 +193,7 @@ CREATE TABLE `usuarios` (
   `senha_hash` varchar(255) NOT NULL,
   `criado_em` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `foto_perfil` VARCHAR(255) NULL,
-  `email_verificado` BOOLEAN NOT NULL DEFAULT FALSE,
-  `token_verificado` CHAR(64) NULL,
-  `verificaacao_expira_em` BIGINT NULL,
-  `tentativas_verificacao` TINYINT UNSIGNED NOT NULL DEFAULT 0,
-  `verificacao_enviado_em` BIGINT NULL,
+  `foto_perfil_atualizada_em` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_usuarios_email` (`email`)
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

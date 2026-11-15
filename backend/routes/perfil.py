@@ -1,4 +1,5 @@
 import logging
+import os
 import re
 from io import BytesIO
 from pathlib import Path
@@ -11,9 +12,15 @@ from routes.usuario import obter_usuario_id, sessao_banco
 perfil = Blueprint("perfil", __name__)
 logger = logging.getLogger(__name__)
 
-PASTA_FOTOS = Path("/app/uploads/perfis")
+PASTA_FOTOS_PADRAO = Path(__file__).resolve().parents[1] / "uploads" / "perfis"
+PASTA_FOTOS = Path(
+    os.getenv("FOTOS_PERFIL_DIR", str(PASTA_FOTOS_PADRAO))
+).expanduser()
 TAMANHO_MAXIMO = 5 * 1024 * 1024
+MARGEM_MULTIPART = 64 * 1024
+TAMANHO_MAXIMO_REQUISICAO = TAMANHO_MAXIMO + MARGEM_MULTIPART
 PIXELS_MAXIMOS = 12_000_000
+INTERVALO_MINIMO_UPLOAD_SEGUNDOS = 60
 
 
 def remover_arquivo_foto(nome):
@@ -49,12 +56,66 @@ def processar_imagem(conteudo):
 
         return resultado.getvalue()
 
+
+def resposta_limite_upload(espera_segundos):
+    resposta = jsonify(
+        {
+            "erro": "Aguarde antes de trocar a foto novamente.",
+            "aguarde_segundos": espera_segundos,
+        }
+    )
+    resposta.status_code = 429
+    resposta.headers["Retry-After"] = str(espera_segundos)
+    return resposta
+
+
+def buscar_espera_upload(cursor, usuario_id, bloquear=False):
+    bloqueio = " FOR UPDATE" if bloquear else ""
+    cursor.execute(
+        f"""
+        SELECT
+            foto_perfil,
+            GREATEST(
+                0,
+                %s - TIMESTAMPDIFF(
+                    SECOND,
+                    foto_perfil_atualizada_em,
+                    CURRENT_TIMESTAMP
+                )
+            ) AS espera_segundos
+        FROM usuarios
+        WHERE id = %s{bloqueio}
+        """,
+        (INTERVALO_MINIMO_UPLOAD_SEGUNDOS, usuario_id),
+    )
+    return cursor.fetchone()
+
 @perfil.route("/usuarios/me/foto", methods=["PUT"])
 def atualizar_foto_perfil():
     usuario_id = obter_usuario_id()
 
     if usuario_id is None:
         return jsonify({"erro": "Não autorizado!"}), 401
+
+    # Limite específico desta rota, aplicado antes de o multipart ser processado.
+    request.max_content_length = TAMANHO_MAXIMO_REQUISICAO
+
+    # A consulta antecipada evita processar imagens caras de quem ainda está no
+    # intervalo de espera. A checagem sob bloqueio abaixo continua sendo a fonte
+    # de verdade para requisições concorrentes.
+    try:
+        with sessao_banco() as (_, cursor):
+            usuario_encontrado = buscar_espera_upload(cursor, usuario_id)
+    except Exception:
+        logger.exception("Erro ao verificar limite de upload da foto")
+        return jsonify({"erro": "Não foi possível atualizar a foto!"}), 500
+
+    if not usuario_encontrado:
+        return jsonify({"erro": "Usuário não encontrado!"}), 404
+
+    espera_segundos = int(usuario_encontrado["espera_segundos"] or 0)
+    if espera_segundos:
+        return resposta_limite_upload(espera_segundos)
 
     arquivo = request.files.get("foto")
 
@@ -91,28 +152,29 @@ def atualizar_foto_perfil():
 
     try:
         with sessao_banco() as (_, cursor):
-            cursor.execute(
-                """
-                SELECT foto_perfil
-                FROM usuarios
-                WHERE id = %s
-                FOR UPDATE
-                """,
-                (usuario_id,),
+            usuario_encontrado = buscar_espera_upload(
+                cursor,
+                usuario_id,
+                bloquear=True,
             )
-
-            usuario_encontrado = cursor.fetchone()
 
             if not usuario_encontrado:
                 remover_arquivo_foto(nome_arquivo)
                 return jsonify({"erro": "Usuário não encontrado!"}), 404
+
+            espera_segundos = int(usuario_encontrado["espera_segundos"] or 0)
+            if espera_segundos:
+                remover_arquivo_foto(nome_arquivo)
+                return resposta_limite_upload(espera_segundos)
 
             foto_anterior = usuario_encontrado["foto_perfil"]
 
             cursor.execute(
                 """
                 UPDATE usuarios
-                SET foto_perfil = %s
+                SET
+                    foto_perfil = %s,
+                    foto_perfil_atualizada_em = CURRENT_TIMESTAMP
                 WHERE id = %s
                 """,
                 (nome_arquivo, usuario_id),

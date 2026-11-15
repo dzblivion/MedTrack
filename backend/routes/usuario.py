@@ -2,6 +2,7 @@ import hashlib
 import hmac
 import logging
 import os
+import re
 import secrets
 import time
 from contextlib import contextmanager
@@ -20,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 TEMPO_EXPIRACAO_CODIGO = 10 * 60
 LIMITE_TENTATIVAS_CODIGO = 5
+INTERVALO_REENVIO_CODIGO = 60
 
 
 @contextmanager
@@ -66,7 +68,16 @@ def texto_obrigatorio(dados, campo):
 
 
 def email_valido(email):
-    return isinstance(email, str) and "@" in email
+    """Valida o formato básico sem tentar comprovar a existência da caixa postal."""
+    if not isinstance(email, str) or len(email) > 150:
+        return False
+
+    return re.fullmatch(
+        r"[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+"
+        r"@[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?"
+        r"(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+",
+        email,
+    ) is not None
 
 
 def erro_chave_duplicada(erro):
@@ -99,6 +110,30 @@ def hash_codigo_recuperacao(codigo):
     ).hexdigest()
 
 
+def segredo_codigo_cadastro():
+    """Chave própria para códigos de cadastro, com fallback seguro."""
+    segredo = (
+        os.getenv("CADASTRO_CODIGO_SECRET")
+        or os.getenv("RECUPERACAO_CODIGO_SECRET")
+        or os.getenv("JWT_SECRET")
+    )
+    if not segredo:
+        raise RuntimeError(
+            "CADASTRO_CODIGO_SECRET, RECUPERACAO_CODIGO_SECRET ou JWT_SECRET não configurado"
+        )
+    return segredo
+
+
+def hash_codigo_cadastro(codigo):
+    """Mantém os códigos de confirmação de cadastro fora do banco em texto puro."""
+    mensagem = f"confirmacao-cadastro:{codigo}".encode()
+    return hmac.new(
+        segredo_codigo_cadastro().encode("utf-8"),
+        mensagem,
+        hashlib.sha256,
+    ).hexdigest()
+
+
 def codigo_recebido_valido(codigo):
     codigo = str(codigo).strip() if codigo is not None else ""
     return codigo if len(codigo) == 6 and codigo.isdigit() else None
@@ -106,6 +141,10 @@ def codigo_recebido_valido(codigo):
 
 def codigo_confere(codigo, codigo_hash):
     return hmac.compare_digest(hash_codigo_recuperacao(codigo), str(codigo_hash))
+
+
+def codigo_cadastro_confere(codigo, codigo_hash):
+    return hmac.compare_digest(hash_codigo_cadastro(codigo), str(codigo_hash))
 
 
 def registrar_tentativa_invalida(cursor, recuperacao):
@@ -196,6 +235,90 @@ def agendar_envio_codigo(email, codigo, recuperacao_id):
     ).start()
 
 
+def criar_mensagem_confirmacao_cadastro(email, codigo):
+    mensagem = Message(
+        subject="Confirme seu e-mail - MedTrack",
+        sender=("MedTrack", os.getenv("MAIL_DEFAULT_SENDER", "dsgncece@gmail.com")),
+        recipients=[email],
+    )
+    mensagem.body = (
+        f"Seu código para confirmar o cadastro é: {codigo}.\n\n"
+        "Ele é válido por 10 minutos. Não compartilhe este código."
+    )
+    return mensagem
+
+
+def invalidar_confirmacao_cadastro(email, codigo_hash):
+    """Remove apenas o código que não pôde ser enviado por SMTP."""
+    with sessao_banco() as (_, cursor):
+        cursor.execute(
+            "DELETE FROM confirmacoes_cadastro WHERE email = %s AND codigo = %s",
+            (email, codigo_hash),
+        )
+
+
+def enviar_confirmacao_cadastro_em_segundo_plano(app, email, codigo, codigo_hash):
+    with app.app_context():
+        try:
+            mail.send(criar_mensagem_confirmacao_cadastro(email, codigo))
+        except Exception:
+            logger.exception("Falha ao enviar e-mail de confirmação de cadastro")
+            try:
+                invalidar_confirmacao_cadastro(email, codigo_hash)
+            except Exception:
+                logger.exception("Falha ao invalidar código de cadastro não enviado")
+
+
+def agendar_confirmacao_cadastro(email, codigo, codigo_hash):
+    app = current_app._get_current_object()
+    Thread(
+        target=enviar_confirmacao_cadastro_em_segundo_plano,
+        args=(app, email, codigo, codigo_hash),
+        daemon=True,
+        name="envio-codigo-cadastro",
+    ).start()
+
+
+def buscar_confirmacao_cadastro(cursor, email):
+    cursor.execute(
+        """
+        SELECT id, codigo, expira_em, tentativas
+        FROM confirmacoes_cadastro
+        WHERE email = %s
+        LIMIT 1
+        FOR UPDATE
+        """,
+        (email,),
+    )
+    return cursor.fetchone()
+
+
+def validar_codigo_cadastro(cursor, email, codigo):
+    """Valida o código sob bloqueio; o chamador deve consumi-lo na mesma transação."""
+    confirmacao = buscar_confirmacao_cadastro(cursor, email)
+    if not confirmacao:
+        return "Código não encontrado ou expirado!"
+
+    if int(time.time()) > int(confirmacao["expira_em"]):
+        cursor.execute("DELETE FROM confirmacoes_cadastro WHERE id = %s", (confirmacao["id"],))
+        return "Código expirado! Solicite um novo código."
+
+    if int(confirmacao["tentativas"]) >= LIMITE_TENTATIVAS_CODIGO:
+        return "Código bloqueado por excesso de tentativas! Solicite um novo código."
+
+    if not codigo_cadastro_confere(codigo, confirmacao["codigo"]):
+        tentativas = int(confirmacao["tentativas"]) + 1
+        cursor.execute(
+            "UPDATE confirmacoes_cadastro SET tentativas = %s WHERE id = %s",
+            (tentativas, confirmacao["id"]),
+        )
+        if tentativas >= LIMITE_TENTATIVAS_CODIGO:
+            return "Código bloqueado por excesso de tentativas! Solicite um novo código."
+        return "Código inválido!"
+
+    return None
+
+
 def obter_usuario_id():
     cabecalho = request.headers.get("Authorization", "")
     if not cabecalho.startswith("Bearer "):
@@ -213,12 +336,78 @@ def obter_usuario_id():
         return None
 
 
+@usuario.route("/solicitar-codigo-cadastro", methods=["POST"])
+def solicitar_codigo_cadastro():
+    dados = dados_json()
+    email = texto_obrigatorio(dados, "email").lower()
+
+    if not email:
+        return jsonify({"erro": "E-mail é obrigatório!"}), 400
+    if not email_valido(email):
+        return jsonify({"erro": "E-mail deve conter @."}), 400
+
+    try:
+        with sessao_banco() as (_, cursor):
+            cursor.execute("SELECT id FROM usuarios WHERE email = %s", (email,))
+            if cursor.fetchone():
+                return jsonify({"erro": "E-mail já cadastrado!"}), 409
+
+            # Evita spam por reenvios: não substitui o código recém-enviado.
+            cursor.execute(
+                """
+                SELECT id
+                FROM confirmacoes_cadastro
+                WHERE email = %s
+                  AND criado_em > DATE_SUB(CURRENT_TIMESTAMP, INTERVAL %s SECOND)
+                FOR UPDATE
+                """,
+                (email, INTERVALO_REENVIO_CODIGO),
+            )
+            if cursor.fetchone():
+                return jsonify(
+                    {
+                        "erro": (
+                            f"Aguarde {INTERVALO_REENVIO_CODIGO} segundos antes "
+                            "de solicitar outro código."
+                        )
+                    }
+                ), 429
+
+            codigo = str(secrets.randbelow(900000) + 100000)
+            codigo_hash = hash_codigo_cadastro(codigo)
+            expira_em = int(time.time()) + TEMPO_EXPIRACAO_CODIGO
+            cursor.execute("DELETE FROM confirmacoes_cadastro WHERE email = %s", (email,))
+            cursor.execute(
+                """
+                INSERT INTO confirmacoes_cadastro (email, codigo, expira_em, tentativas)
+                VALUES (%s, %s, %s, 0)
+                """,
+                (email, codigo_hash, expira_em),
+            )
+    except Exception:
+        logger.exception("Erro ao criar código de confirmação de cadastro")
+        return jsonify({"erro": "Não foi possível enviar o código de confirmação!"}), 500
+
+    try:
+        agendar_confirmacao_cadastro(email, codigo, codigo_hash)
+    except Exception:
+        logger.exception("Não foi possível agendar o e-mail de confirmação")
+        try:
+            invalidar_confirmacao_cadastro(email, codigo_hash)
+        except Exception:
+            logger.exception("Não foi possível invalidar código de cadastro não agendado")
+        return jsonify({"erro": "Não foi possível enviar o código de confirmação!"}), 500
+
+    return jsonify({"mensagem": "Código de confirmação enviado para o e-mail informado."}), 202
+
+
 @usuario.route("/cadastrar-usuario", methods=["POST"])
 def cadastrar_usuario():
     dados = dados_json()
     nome = texto_obrigatorio(dados, "nome")
     email = texto_obrigatorio(dados, "email").lower()
     senha = dados.get("senha")
+    codigo = codigo_recebido_valido(dados.get("codigo"))
 
     if not nome:
         return jsonify({"erro": "Nome é obrigatório!"}), 400
@@ -230,15 +419,21 @@ def cadastrar_usuario():
         return jsonify({"erro": "Senha é obrigatória!"}), 400
     if len(senha) < 8:
         return jsonify({"erro": "Senha deve ter pelo menos 8 caracteres!"}), 400
+    if not codigo:
+        return jsonify({"erro": "Código de confirmação de seis dígitos é obrigatório!"}), 400
 
     senha_hash = bcrypt.hashpw(senha.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
     try:
         with sessao_banco() as (_, cursor):
+            erro_codigo = validar_codigo_cadastro(cursor, email, codigo)
+            if erro_codigo:
+                return jsonify({"erro": erro_codigo}), 400
             cursor.execute(
                 "INSERT INTO usuarios (nome, email, senha_hash) VALUES (%s, %s, %s)",
                 (nome, email, senha_hash),
             )
+            cursor.execute("DELETE FROM confirmacoes_cadastro WHERE email = %s", (email,))
     except Exception as erro:
         if erro_chave_duplicada(erro):
             return jsonify({"erro": "E-mail já cadastrado!"}), 409
@@ -257,6 +452,7 @@ def cadastrar_profissional():
     profissao = texto_obrigatorio(dados, "profissao")
     registro = texto_obrigatorio(dados, "registro")
     uf_registro = texto_obrigatorio(dados, "uf_registro")
+    codigo = codigo_recebido_valido(dados.get("codigo"))
 
     if not nome:
         return jsonify({"erro": "Nome é obrigatório!"}), 400
@@ -274,11 +470,16 @@ def cadastrar_profissional():
         return jsonify({"erro": "Registro é obrigatório!"}), 400
     if not uf_registro:
         return jsonify({"erro": "UF do registro é obrigatória!"}), 400
+    if not codigo:
+        return jsonify({"erro": "Código de confirmação de seis dígitos é obrigatório!"}), 400
 
     senha_hash = bcrypt.hashpw(senha.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
     try:
         with sessao_banco() as (_, cursor):
+            erro_codigo = validar_codigo_cadastro(cursor, email, codigo)
+            if erro_codigo:
+                return jsonify({"erro": erro_codigo}), 400
             cursor.execute(
                 "INSERT INTO usuarios (nome, email, senha_hash) VALUES (%s, %s, %s)",
                 (nome, email, senha_hash),
@@ -291,6 +492,7 @@ def cadastrar_profissional():
                 """,
                 (usuario_id, profissao, registro, uf_registro),
             )
+            cursor.execute("DELETE FROM confirmacoes_cadastro WHERE email = %s", (email,))
     except Exception as erro:
         if erro_chave_duplicada(erro):
             return jsonify({"erro": "E-mail ou registro já cadastrado!"}), 409

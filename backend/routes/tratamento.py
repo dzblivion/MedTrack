@@ -36,6 +36,7 @@ LIMITE_PAGINA = 100
 LIMITE_DURACAO_DIAS = 3650
 LIMITE_INTERVALO_HORAS = 24 * LIMITE_DURACAO_DIAS
 LIMITE_DOSES_GERADAS = 10_000
+JANELA_DOSES_CONTINUAS_DIAS = 30
 TIPOS_FREQUENCIA = {"diario", "semanal", "intervalo_horas", "intervalo_dias"}
 
 
@@ -356,59 +357,58 @@ def validar_frequencia(dados, data_inicio, duracao_dias):
     }, None
 
 
-def gerar_doses(frequencia):
+def gerar_doses(frequencia, a_partir_de=None):
+    """Gera doses futuras, limitando tratamentos contínuos a uma janela móvel."""
     tipo = frequencia["tipo"]
     ancora_em = frequencia["ancora_em"]
     duracao_dias = frequencia["duracao_dias"]
-
-    if duracao_dias is None:
-        return [], None
-
     horarios = frequencia["horarios"]
     dias_semana = frequencia["dias_semana"]
     intervalo_valor = frequencia["intervalo_valor"]
 
-    if tipo == "diario":
-        quantidade_prevista = duracao_dias * len(horarios)
-    elif tipo == "semanal":
-        quantidade_dias = sum(
-            1
-            for deslocamento in range(duracao_dias)
-            if (ancora_em.date() + timedelta(days=deslocamento)).isoweekday()
-            in dias_semana
-        )
-        quantidade_prevista = quantidade_dias * len(horarios)
-    elif tipo == "intervalo_horas":
-        quantidade_prevista = ceil((duracao_dias * 24) / intervalo_valor)
+    # Para tratamentos sem data de fim, não criamos doses indefinidamente. A cada
+    # reposição mantemos doses para os próximos 30 dias.
+    if duracao_dias is None:
+        agora = datetime.now(FUSO_HORARIO).replace(tzinfo=None)
+        inicio = max(ancora_em, a_partir_de or agora)
+        fim = max(ancora_em, agora) + timedelta(days=JANELA_DOSES_CONTINUAS_DIAS)
+        ultimo_dia_exclusivo = fim.date()
     else:
-        quantidade_prevista = ceil(duracao_dias / intervalo_valor)
+        inicio = max(ancora_em, a_partir_de or ancora_em)
+        fim = ancora_em + timedelta(days=duracao_dias)
+        ultimo_dia_exclusivo = ancora_em.date() + timedelta(days=duracao_dias)
 
-    if quantidade_prevista > LIMITE_DOSES_GERADAS:
-        return None, (
-            f"A frequência gera mais de {LIMITE_DOSES_GERADAS} doses; "
-            "reduza a duração ou aumente o intervalo!"
-        )
+    if inicio >= fim:
+        return [], None
 
     doses = []
-    if tipo == "diario":
-        data_atual = ancora_em.date()
 
-        for _ in range(duracao_dias):
+    def limite_excedido():
+        return len(doses) > LIMITE_DOSES_GERADAS
+
+    if tipo == "diario":
+        data_atual = max(ancora_em.date(), inicio.date())
+
+        while data_atual < ultimo_dia_exclusivo:
             for horario in horarios:
                 dose = datetime.combine(
                     data_atual,
                     horario_time.fromisoformat(horario)
                 )
 
-                # Só agenda doses a partir da âncora.
-                if dose >= ancora_em:
+                if inicio <= dose < fim:
                     doses.append(dose)
+                    if limite_excedido():
+                        return None, (
+                            f"A frequência gera mais de {LIMITE_DOSES_GERADAS} doses; "
+                            "reduza a duração ou aumente o intervalo!"
+                        )
 
             data_atual += timedelta(days=1)
     elif tipo == "semanal":
-        data_atual = ancora_em.date()
+        data_atual = max(ancora_em.date(), inicio.date())
 
-        for _ in range(duracao_dias):
+        while data_atual < ultimo_dia_exclusivo:
             if data_atual.isoweekday() in dias_semana:
                 for horario in horarios:
                     dose = datetime.combine(
@@ -416,9 +416,13 @@ def gerar_doses(frequencia):
                         horario_time.fromisoformat(horario)
                     )
 
-                    # Evita doses anteriores à âncora.
-                    if dose >= ancora_em:
+                    if inicio <= dose < fim:
                         doses.append(dose)
+                        if limite_excedido():
+                            return None, (
+                                f"A frequência gera mais de {LIMITE_DOSES_GERADAS} doses; "
+                                "reduza a duração ou aumente o intervalo!"
+                            )
 
             data_atual += timedelta(days=1)
     else:
@@ -427,16 +431,128 @@ def gerar_doses(frequencia):
             if tipo == "intervalo_horas"
             else timedelta(days=intervalo_valor)
         )
-        data_hora_atual = ancora_em
-        data_final = ancora_em + timedelta(days=duracao_dias)
-        while data_hora_atual < data_final:
+        passos_ate_inicio = max(0, ceil((inicio - ancora_em) / incremento))
+        data_hora_atual = ancora_em + (incremento * passos_ate_inicio)
+        while data_hora_atual < fim:
             doses.append(data_hora_atual)
+            if limite_excedido():
+                return None, (
+                    f"A frequência gera mais de {LIMITE_DOSES_GERADAS} doses; "
+                    "reduza a duração ou aumente o intervalo!"
+                )
             data_hora_atual += incremento
 
-    if not doses:
+    if not doses and duracao_dias is not None:
         return None, "A frequência informada não gera doses durante o tratamento!"
 
     return doses, None
+
+
+def buscar_frequencia_ativa(cursor, tratamento_id):
+    cursor.execute(
+        """
+        SELECT id, tipo, intervalo_valor, ancora_em
+        FROM regras_frequencia
+        WHERE tratamento_id = %s AND ativo = 1
+        ORDER BY id
+        LIMIT 1
+        """,
+        (tratamento_id,),
+    )
+    regra = cursor.fetchone()
+    if not regra:
+        return None
+
+    cursor.execute(
+        """
+        SELECT horario
+        FROM horarios_frequencia
+        WHERE regra_frequencia_id = %s
+        ORDER BY horario
+        """,
+        (regra["id"],),
+    )
+    horarios = [str(item["horario"]) for item in cursor.fetchall()]
+
+    cursor.execute(
+        """
+        SELECT dia_semana
+        FROM dias_semana_frequencia
+        WHERE regra_frequencia_id = %s
+        ORDER BY dia_semana
+        """,
+        (regra["id"],),
+    )
+    dias_semana = [item["dia_semana"] for item in cursor.fetchall()]
+
+    return {
+        "tipo": regra["tipo"],
+        "intervalo_valor": regra["intervalo_valor"],
+        "ancora_em": regra["ancora_em"],
+        "horarios": horarios,
+        "dias_semana": dias_semana,
+        "duracao_dias": None,
+    }
+
+
+def inserir_doses_pendentes(cursor, tratamento_id, doses):
+    """Insere só as novas doses; o índice único evita duplicidade em concorrência."""
+    if not doses:
+        return 0
+
+    cursor.executemany(
+        """
+        INSERT IGNORE INTO doses (tratamento_id, agendada_para, status)
+        VALUES (%s, %s, 'pendente')
+        """,
+        [(tratamento_id, dose) for dose in doses],
+    )
+    return cursor.rowcount
+
+
+def repor_doses_continuas(cursor, usuario_id=None, tratamento_id=None):
+    """Completa a janela futura de doses dos tratamentos contínuos ativos."""
+    sql = """
+        SELECT id
+        FROM tratamentos
+        WHERE status = 'ativo' AND duracao_dias IS NULL
+    """
+    parametros = []
+    if usuario_id is not None:
+        sql += " AND usuario_id = %s"
+        parametros.append(usuario_id)
+    if tratamento_id is not None:
+        sql += " AND id = %s"
+        parametros.append(tratamento_id)
+    sql += " FOR UPDATE"
+
+    cursor.execute(sql, tuple(parametros))
+    tratamentos = cursor.fetchall()
+    agora = datetime.now(FUSO_HORARIO).replace(tzinfo=None)
+    doses_inseridas = 0
+
+    for tratamento_atual in tratamentos:
+        frequencia = buscar_frequencia_ativa(cursor, tratamento_atual["id"])
+        if not frequencia:
+            logger.warning(
+                "Tratamento contínuo %s não possui frequência ativa",
+                tratamento_atual["id"],
+            )
+            continue
+
+        doses, erro = gerar_doses(frequencia, a_partir_de=agora)
+        if erro:
+            raise ValueError(
+                f"Não foi possível gerar doses do tratamento {tratamento_atual['id']}: {erro}"
+            )
+
+        doses_inseridas += inserir_doses_pendentes(
+            cursor,
+            tratamento_atual["id"],
+            doses,
+        )
+
+    return doses_inseridas
 
 
 def serializar_valor(valor):
@@ -594,17 +710,7 @@ def cadastrar_tratamento():
                     ),
                 )
 
-            cursor.executemany(
-                """
-                INSERT INTO doses (
-                    tratamento_id,
-                    agendada_para,
-                    status
-                )
-                VALUES (%s, %s, 'pendente')
-                """,
-                [(tratamento_id, dose) for dose in doses],
-            )
+            inserir_doses_pendentes(cursor, tratamento_id, doses)
     except Exception:
         logger.exception("Erro ao cadastrar tratamento")
         return resposta_erro_banco()
@@ -724,6 +830,7 @@ def listar_tratamentos():
 
     try:
         with sessao_banco() as (_, cursor):
+            repor_doses_continuas(cursor, usuario_id=usuario_id)
             sql = """
                 SELECT
                     id,
@@ -775,6 +882,8 @@ def buscar_tratamento(tratamento_id):
 
             if not tratamento_encontrado:
                 return jsonify({"erro": "Tratamento não encontrado!"}), 404
+
+            repor_doses_continuas(cursor, tratamento_id=tratamento_id)
 
             cursor.execute(
                 """

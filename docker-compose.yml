@@ -31,6 +31,7 @@ services:
       DB_USER: medtrack
       DB_PASSWORD: medtrack
       DB_NAME: medtrack
+      FOTOS_PERFIL_DIR: /app/uploads/perfis
     ports:
       - "5000:5000"
     depends_on:
@@ -38,6 +39,21 @@ services:
         condition: service_healthy
     volumes:
       - foto_perfil:/app/uploads/perfis
+
+  scheduler:
+    build: ./backend
+    env_file: ./backend/.env
+    environment:
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_USER: medtrack
+      DB_PASSWORD: medtrack
+      DB_NAME: medtrack
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["sh", "-c", "while true; do python renovar_doses_continuas.py; sleep 21600; done"]
+    restart: unless-stopped
 
 volumes:
   dados_mysql:

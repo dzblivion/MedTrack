@@ -36,7 +36,7 @@ O app Flutter já aponta para `localhost:5000` (navegador e Windows) e `10.0.2.2
 | `docker compose up -d` | Liga a API e o banco |
 | `docker compose down` | Desliga tudo (os dados do banco são mantidos) |
 | `docker compose logs -f api` | Mostra o log da API |
-| `docker compose up -d --build` | Liga reconstruindo a API (depois de mudar o `requirements.txt` ou o código) |
+| `docker compose up -d --build` | Liga reconstruindo a API e o agendador (depois de mudar o `requirements.txt` ou o código) |
 | `docker compose down -v` | Desliga e **apaga o banco**, para recriar do zero a partir de `database/` |
 
 ### Banco de dados
@@ -44,3 +44,7 @@ O app Flutter já aponta para `localhost:5000` (navegador e Windows) e `10.0.2.2
 - Para abrir o banco num cliente como o MySQL Workbench: host `127.0.0.1`, porta `3307`, usuário `medtrack`, senha `medtrack`.
 - Para rodar a API pelo Python (`python app.py`, fora do Docker) usando esse banco, coloque no `backend/.env`: `DB_HOST=127.0.0.1`, `DB_PORT=3307`, `DB_USER=medtrack`, `DB_PASSWORD=medtrack`. Antes, pare o container da API com `docker compose stop api`, porque os dois usam a porta 5000.
 - Essas credenciais são só do ambiente local de desenvolvimento.
+
+### Tratamentos contínuos
+
+Envie `duracao_dias` como `null` (ou omita o campo) para um tratamento sem data de fim. O backend mantém uma janela de 30 dias de doses futuras e o serviço `scheduler` a repõe a cada seis horas. Ao pausar ou cancelar o tratamento, não são geradas novas doses.

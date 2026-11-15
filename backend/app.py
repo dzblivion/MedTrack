@@ -5,6 +5,7 @@ from config.mail import mail
 from dotenv import load_dotenv
 from flask import Flask
 from flask_cors import CORS
+from werkzeug.exceptions import RequestEntityTooLarge
 from routes.compartilhamento import compartilhamento
 from routes.perfil import perfil
 from routes.tratamento import tratamento
@@ -14,6 +15,11 @@ load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
+
+
+@app.errorhandler(RequestEntityTooLarge)
+def arquivo_grande(_erro):
+    return {"erro": "O arquivo enviado é maior que o tamanho permitido!"}, 413
 
 app.config["MAIL_SERVER"] = "smtp.gmail.com"
 app.config["MAIL_PORT"] = 587
