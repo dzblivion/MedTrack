@@ -4,7 +4,7 @@ import logging
 import os
 import secrets
 from contextlib import contextmanager
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from zoneinfo import ZoneInfo
 
 from config.database import banco
@@ -15,7 +15,6 @@ compartilhamento = Blueprint('compartilhamento', __name__)
 logger = logging.getLogger(__name__)
 
 FUSO_HORARIO = ZoneInfo("America/Fortaleza")
-VALIDADE_CODIGO_HORAS = 24
 
 @contextmanager
 def sessao_banco():
@@ -179,7 +178,6 @@ def criar_compartilhamento():
     codigo = gerar_codigo_compartilhamento()
     codigo_hash = hash_codigo_compartilhamento(codigo)
     criado_em = agora_local()
-    expira_em = criado_em + timedelta(hours=VALIDADE_CODIGO_HORAS)
 
     try:
         with sessao_banco() as (_, cursor):
@@ -209,12 +207,11 @@ def criar_compartilhamento():
                     paciente_usuario_id,
                     codigo_hash,
                     status,
-                    criado_em,
-                    expira_em
+                    criado_em
                 )
-                VALUES (%s, %s, %s, 'pendente', %s, %s)
+                VALUES (%s, %s, %s, 'pendente', %s)
                 """,
-                (tratamento_id, paciente_id, codigo_hash, criado_em, expira_em),
+                (tratamento_id, paciente_id, codigo_hash, criado_em),
             )
             compartilhamento_id = cursor.lastrowid
     except Exception:
@@ -225,9 +222,10 @@ def criar_compartilhamento():
         "mensagem": "Código de compartilhamento criado com sucesso!",
         "compartilhamento_id": compartilhamento_id,
         "codigo": codigo,
-        "expira_em": expira_em.isoformat(),
-        "validade_horas": VALIDADE_CODIGO_HORAS,
-        "aviso": "Guarde este código. Ele será exibido apenas nesta resposta.",
+        "aviso": (
+            "Guarde este código. Ele será exibido apenas nesta resposta e "
+            "permanece válido até um profissional utilizá-lo ou você revogá-lo."
+        ),
     }), 201
 
 @compartilhamento.route("/compartilhamentos", methods=["GET"])
@@ -249,6 +247,7 @@ def listar_compartilhamentos_paciente():
                 SET status = 'expirado'
                 WHERE paciente_usuario_id = %s
                   AND status = 'pendente'
+                  AND expira_em IS NOT NULL
                   AND expira_em <= %s
                 """,
                 (paciente_id, agora),
@@ -268,6 +267,7 @@ def listar_compartilhamentos_paciente():
                     c.criado_em,
                     c.expira_em,
                     c.utilizado_em,
+                    c.respondido_em,
                     c.revogado_em
                 FROM compartilhamentos c
                 INNER JOIN tratamentos t ON t.id = c.tratamento_id
@@ -323,7 +323,7 @@ def validar_codigo_compartilhamento():
                 return jsonify({"erro": "Código inválido ou indisponível!"}), 400
             if registro["status"] != "pendente":
                 return jsonify({"erro": "Este código já foi utilizado ou não está disponível!"}), 409
-            if registro["expira_em"] <= agora:
+            if registro["expira_em"] is not None and registro["expira_em"] <= agora:
                 cursor.execute(
                     "UPDATE compartilhamentos SET status = 'expirado' WHERE id = %s",
                     (registro["id"],),
@@ -333,33 +333,130 @@ def validar_codigo_compartilhamento():
             cursor.execute(
                 """
                 UPDATE compartilhamentos
-                SET status = 'ativo',
+                SET status = 'aguardando_aprovacao',
                     profissional_usuario_id = %s,
                     utilizado_em = %s
                 WHERE id = %s AND status = 'pendente'
                 """,
                 (profissional_id, agora, registro["id"]),
             )
-            cursor.execute(
-                """
-                SELECT medicamento, dosagem_valor, dosagem_unidade,
-                       quantidade_por_dose, forma_consumo, data_inicio,
-                       duracao_dias, status
-                FROM tratamentos
-                WHERE id = %s
-                """,
-                (registro["tratamento_id"],),
-            )
-            tratamento = cursor.fetchone()
     except Exception:
         logger.exception("Erro ao validar código de compartilhamento")
         return jsonify({"erro": "Não foi possível validar o código!"}), 500
 
     return jsonify({
-        "mensagem": "Código validado. O tratamento foi compartilhado com você.",
+        "mensagem": "Solicitação enviada ao paciente. Aguarde a aprovação para acessar o tratamento.",
         "compartilhamento_id": registro["id"],
-        "tratamento": serializar_registro(tratamento),
+        "status": "aguardando_aprovacao",
     }), 200
+
+
+@compartilhamento.route("/compartilhamentos/solicitacoes", methods=["GET"])
+def listar_solicitacoes_pendentes():
+    """Fonte de notificação para o aplicativo do paciente consultar."""
+    paciente_id, erro_autenticacao = obter_usuario_autenticado()
+    if erro_autenticacao:
+        return erro_autenticacao
+
+    try:
+        with sessao_banco() as (_, cursor):
+            erro_paciente = exigir_paciente(cursor, paciente_id)
+            if erro_paciente:
+                return erro_paciente
+
+            cursor.execute(
+                """
+                SELECT
+                    c.id AS compartilhamento_id,
+                    c.tratamento_id,
+                    c.utilizado_em AS solicitado_em,
+                    t.medicamento,
+                    u.id AS profissional_usuario_id,
+                    u.nome AS profissional_nome,
+                    p.profissao,
+                    p.registro,
+                    p.uf_registro
+                FROM compartilhamentos c
+                INNER JOIN tratamentos t ON t.id = c.tratamento_id
+                INNER JOIN usuarios u ON u.id = c.profissional_usuario_id
+                INNER JOIN profissionais p ON p.usuario_id = c.profissional_usuario_id
+                WHERE c.paciente_usuario_id = %s
+                  AND c.status = 'aguardando_aprovacao'
+                ORDER BY c.utilizado_em DESC, c.id DESC
+                """,
+                (paciente_id,),
+            )
+            registros = cursor.fetchall()
+    except Exception:
+        logger.exception("Erro ao listar solicitações de compartilhamento")
+        return jsonify({"erro": "Não foi possível buscar as solicitações!"}), 500
+
+    return jsonify(
+        {
+            "solicitacoes": [serializar_registro(item) for item in registros],
+            "quantidade_pendente": len(registros),
+        }
+    ), 200
+
+
+@compartilhamento.route("/compartilhamentos/<int:compartilhamento_id>/decisao", methods=["PATCH"])
+def decidir_solicitacao_compartilhamento(compartilhamento_id):
+    paciente_id, erro_autenticacao = obter_usuario_autenticado()
+    if erro_autenticacao:
+        return erro_autenticacao
+
+    decisao = obter_dados_json().get("decisao")
+    if decisao not in {"aprovar", "recusar"}:
+        return jsonify({"erro": "A decisão deve ser 'aprovar' ou 'recusar'!"}), 400
+
+    novo_status = "ativo" if decisao == "aprovar" else "recusado"
+    agora = agora_local()
+
+    try:
+        with sessao_banco() as (_, cursor):
+            erro_paciente = exigir_paciente(cursor, paciente_id)
+            if erro_paciente:
+                return erro_paciente
+
+            cursor.execute(
+                """
+                SELECT id
+                FROM compartilhamentos
+                WHERE id = %s
+                  AND paciente_usuario_id = %s
+                  AND status = 'aguardando_aprovacao'
+                FOR UPDATE
+                """,
+                (compartilhamento_id, paciente_id),
+            )
+            if not cursor.fetchone():
+                return jsonify(
+                    {"erro": "Solicitação pendente não encontrada!"}
+                ), 404
+
+            cursor.execute(
+                """
+                UPDATE compartilhamentos
+                SET status = %s,
+                    respondido_em = %s,
+                    codigo_hash = CASE
+                        WHEN %s = 'ativo' THEN NULL
+                        ELSE codigo_hash
+                    END
+                WHERE id = %s
+                """,
+                (novo_status, agora, novo_status, compartilhamento_id),
+            )
+    except Exception:
+        logger.exception("Erro ao decidir solicitação de compartilhamento")
+        return jsonify({"erro": "Não foi possível registrar a decisão!"}), 500
+
+    mensagem = (
+        "Acesso liberado para o profissional."
+        if decisao == "aprovar"
+        else "Solicitação de acesso recusada."
+    )
+    return jsonify({"mensagem": mensagem, "status": novo_status}), 200
 
 @compartilhamento.route("/compartilhamentos/profissional", methods=["GET"])
 def listar_compartilhamentos_profissional():
@@ -424,6 +521,7 @@ def buscar_compartilhamento(compartilhamento_id):
                     c.criado_em AS compartilhado_em,
                     c.expira_em,
                     c.utilizado_em,
+                    c.respondido_em,
                     c.revogado_em,
                     t.id AS tratamento_id,
                     t.usuario_id AS dono_tratamento_id,
@@ -483,6 +581,7 @@ def buscar_compartilhamento(compartilhamento_id):
         "compartilhado_em": serializar_valor(registro["compartilhado_em"]),
         "expira_em": serializar_valor(registro["expira_em"]),
         "utilizado_em": serializar_valor(registro["utilizado_em"]),
+        "respondido_em": serializar_valor(registro["respondido_em"]),
         "revogado_em": serializar_valor(registro["revogado_em"]),
     }
     dados_tratamento = {

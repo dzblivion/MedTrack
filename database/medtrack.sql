@@ -207,12 +207,20 @@ CREATE TABLE `compartilhamentos` (
     `tratamento_id` int unsigned NOT NULL,
     `paciente_usuario_id` int unsigned NOT NULL,
     `profissional_usuario_id` int unsigned DEFAULT NULL,
-    `codigo_hash` char(64) NOT NULL,
-    `status` enum('pendente','ativo','revogado','expirado')
+    `codigo_hash` char(64) DEFAULT NULL,
+    `status` enum(
+        'pendente',
+        'aguardando_aprovacao',
+        'ativo',
+        'recusado',
+        'revogado',
+        'expirado'
+    )
         NOT NULL DEFAULT 'pendente',
     `criado_em` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `expira_em` datetime NOT NULL,
+    `expira_em` datetime DEFAULT NULL,
     `utilizado_em` datetime DEFAULT NULL,
+    `respondido_em` datetime DEFAULT NULL,
     `revogado_em` datetime DEFAULT NULL,
 
     PRIMARY KEY (`id`),
@@ -221,6 +229,8 @@ CREATE TABLE `compartilhamentos` (
         (`tratamento_id`, `status`, `profissional_usuario_id`),
     KEY `idx_compartilhamento_paciente`
         (`paciente_usuario_id`, `status`),
+    KEY `idx_compartilhamento_profissional`
+        (`profissional_usuario_id`, `status`),
 
     CONSTRAINT `fk_compartilhamento_tratamento`
         FOREIGN KEY (`tratamento_id`) REFERENCES `tratamentos` (`id`),
