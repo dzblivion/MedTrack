@@ -90,11 +90,11 @@ class _LoginScreenState extends State<LoginScreen> {
               obscureText: !_senhaVisivel,
               textInputAction: TextInputAction.done,
               validator: AuthValidators.senhaObrigatoria,
-              onFieldSubmitted: (_) => _entrar(),
               suffixIcon: OlhoSenha(
                 visivel: _senhaVisivel,
                 onPressed: () => setState(() => _senhaVisivel = !_senhaVisivel),
               ),
+              onFieldSubmitted: (_) => _entrar(),
             ),
             const SizedBox(height: 20),
             AuthLink(texto: 'Esqueci minha senha', onTap: _esqueciSenha),

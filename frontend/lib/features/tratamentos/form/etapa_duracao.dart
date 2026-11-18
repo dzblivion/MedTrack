@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-
 import '../../../theme/app_theme.dart';
 import '../../../widgets/app_text_field.dart';
 import '../tratamento_validators.dart';
@@ -21,7 +19,8 @@ class EtapaDuracao extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final r = rascunho;
-    final rotulo = GoogleFonts.poppins(
+    final rotulo = TextStyle(
+      fontFamily: 'Poppins',
       color: AppColors.inputText,
       fontSize: 12,
       fontWeight: FontWeight.w600,
@@ -145,7 +144,8 @@ class _OpcaoDuracao extends StatelessWidget {
             children: [
               Text(
                 titulo,
-                style: GoogleFonts.poppins(
+                style: TextStyle(
+                  fontFamily: 'Poppins',
                   color: cor,
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
@@ -153,7 +153,7 @@ class _OpcaoDuracao extends StatelessWidget {
               ),
               Text(
                 descricao,
-                style: GoogleFonts.poppins(color: cor, fontSize: 8),
+                style: TextStyle(color: cor, fontFamily: 'Poppins', fontSize: 8),
               ),
             ],
           ),
@@ -192,7 +192,8 @@ class _Resumo extends StatelessWidget {
                 children: [
                   Text(
                     rotulo,
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
                       color: AppColors.darkCiano,
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
@@ -200,7 +201,8 @@ class _Resumo extends StatelessWidget {
                   ),
                   Text(
                     valor,
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
                       color: AppColors.gray,
                       fontSize: 10,
                     ),

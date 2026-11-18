@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../theme/app_theme.dart';
 import '../../doses/dose.dart';
@@ -83,8 +82,9 @@ class _LinhaDose extends StatelessWidget {
               children: [
                 Text(
                   dose.horario,
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                     color: atrasada ? AppColors.error : AppColors.inputText,
+                    fontFamily: 'Poppins',
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                   ),
@@ -92,8 +92,9 @@ class _LinhaDose extends StatelessWidget {
                 if (atrasada)
                   Text(
                     'atrasada',
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                       color: AppColors.error,
+                      fontFamily: 'Poppins',
                       fontSize: 8,
                       fontWeight: FontWeight.w600,
                     ),
@@ -109,8 +110,9 @@ class _LinhaDose extends StatelessWidget {
                   dose.medicamento,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                     color: AppColors.inputText,
+                    fontFamily: 'Poppins',
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -119,8 +121,9 @@ class _LinhaDose extends StatelessWidget {
                   dose.detalhe,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                     color: AppColors.gray,
+                    fontFamily: 'Poppins',
                     fontSize: 10,
                   ),
                 ),
@@ -168,7 +171,7 @@ class _LinhaDose extends StatelessWidget {
       case StatusDose.pendente:
         return Text(
           'aguardando',
-          style: GoogleFonts.poppins(color: AppColors.gray, fontSize: 10),
+          style: TextStyle(color: AppColors.gray, fontFamily: 'Poppins', fontSize: 10),
         );
     }
   }
@@ -196,9 +199,10 @@ class _Selo extends StatelessWidget {
           const SizedBox(width: 3),
           Text(
             texto,
-            style: GoogleFonts.poppins(
+            style: TextStyle(
               color: cor,
               fontSize: 10,
+              fontFamily: 'Poppins',
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -228,8 +232,9 @@ class _BotaoPequeno extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 10),
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-        textStyle: GoogleFonts.poppins(
+        textStyle: TextStyle(
           fontSize: 10,
+          fontFamily: 'Poppins',
           fontWeight: FontWeight.w600,
         ),
       ),

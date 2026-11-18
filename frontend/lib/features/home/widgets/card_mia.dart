@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../theme/app_theme.dart';
 import 'cartao.dart';
@@ -12,9 +11,10 @@ class CardMia extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final titulo = GoogleFonts.poppins(
+    final titulo = TextStyle(
       color: AppColors.inputText,
       fontSize: 14,
+      fontFamily: 'Poppins',
       fontWeight: FontWeight.w600,
     );
 
@@ -54,7 +54,7 @@ class CardMia extends StatelessWidget {
           Text(
             'Envie sua prescrição e deixe a MIA organizar as informações do '
             'seu tratamento.',
-            style: GoogleFonts.poppins(color: AppColors.gray, fontSize: 10),
+            style: TextStyle(color: AppColors.gray, fontFamily: 'Poppins', fontSize: 10),
           ),
           const SizedBox(height: 10),
           Align(
@@ -70,7 +70,8 @@ class CardMia extends StatelessWidget {
                 minimumSize: const Size(0, 30),
                 padding: const EdgeInsets.symmetric(horizontal: 14),
                 shape: const StadiumBorder(),
-                textStyle: GoogleFonts.poppins(
+                textStyle: TextStyle(
+                  fontFamily: 'Poppins',
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                 ),

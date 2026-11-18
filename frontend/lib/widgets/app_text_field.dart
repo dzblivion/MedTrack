@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
-
 import '../theme/app_theme.dart';
 
 class AppTextField extends StatelessWidget {
@@ -45,7 +43,8 @@ class AppTextField extends StatelessWidget {
       children: [
         Text(
           label,
-          style: GoogleFonts.poppins(
+          style: TextStyle(
+            fontFamily: 'Poppins',
             color: AppColors.inputText,
             fontSize: 12,
             fontWeight: FontWeight.w600,
@@ -64,7 +63,7 @@ class AppTextField extends StatelessWidget {
           autofillHints: autofillHints,
           readOnly: onTap != null,
           onTap: onTap,
-          style: GoogleFonts.poppins(color: AppColors.inputText, fontSize: 10),
+          style: TextStyle(color: AppColors.inputText, fontFamily: 'Poppins', fontSize: 10),
           decoration: InputDecoration(
             suffixIcon: suffixIcon,
             suffixIconConstraints: const BoxConstraints(
@@ -72,7 +71,8 @@ class AppTextField extends StatelessWidget {
               minHeight: 0,
             ),
             hintText: hint,
-            hintStyle: GoogleFonts.poppins(
+            hintStyle: TextStyle(
+              fontFamily: 'Poppins',
               color: AppColors.hintText,
               fontSize: 10,
             ),
@@ -83,7 +83,7 @@ class AppTextField extends StatelessWidget {
               horizontal: 5,
               vertical: 8,
             ),
-            errorStyle: GoogleFonts.poppins(color: AppColors.error, fontSize: 10),
+            errorStyle: TextStyle(color: AppColors.error, fontFamily: 'Poppins', fontSize: 10),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(5),
               borderSide: BorderSide.none,

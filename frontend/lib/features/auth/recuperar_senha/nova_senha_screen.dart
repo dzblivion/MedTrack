@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/features/auth/widgets/olho_senha.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -30,6 +31,8 @@ class _NovaSenhaScreenState extends State<NovaSenhaScreen> {
   final _confirmarController = TextEditingController();
 
   bool _carregando = false;
+  bool _senhaVisivel = false;
+  bool _confirmarSenhaVisivel = false;
 
   @override
   void dispose() {
@@ -86,8 +89,12 @@ class _NovaSenhaScreenState extends State<NovaSenhaScreen> {
               label: 'Nova senha',
               hint: 'Digite a nova senha',
               controller: _senhaController,
-              obscureText: true,
+              obscureText: !_senhaVisivel,
               textInputAction: TextInputAction.next,
+              suffixIcon: OlhoSenha(
+                visivel: _senhaVisivel,
+                onPressed: () => setState(() => _senhaVisivel = !_senhaVisivel),
+              ),
               autofillHints: const [AutofillHints.newPassword],
               validator: AuthValidators.novaSenha,
             ),
@@ -96,8 +103,12 @@ class _NovaSenhaScreenState extends State<NovaSenhaScreen> {
               label: 'Confirmar nova senha',
               hint: 'Confirme a nova senha',
               controller: _confirmarController,
-              obscureText: true,
+              obscureText: !_confirmarSenhaVisivel,
               textInputAction: TextInputAction.done,
+              suffixIcon: OlhoSenha(
+                visivel: _confirmarSenhaVisivel,
+                onPressed: () => setState(() => _confirmarSenhaVisivel = !_confirmarSenhaVisivel),
+              ),
               validator: AuthValidators.confirmarSenha(
                 () => _senhaController.text,
               ),

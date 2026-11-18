@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../theme/app_theme.dart';
 import 'cartao.dart';
@@ -14,7 +13,7 @@ class CardAdesao extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fracao = total == 0 ? 0.0 : tomadas / total;
-    final pequeno = GoogleFonts.poppins(color: AppColors.gray, fontSize: 10);
+    final pequeno = TextStyle(color: AppColors.gray, fontFamily: 'Poppins',fontSize: 10);
 
     return Cartao(
       child: Column(

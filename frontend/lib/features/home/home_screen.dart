@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/api/api_client.dart';
@@ -46,8 +45,9 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 25),
             Text(
               'Seu tratamento de hoje:',
-              style: GoogleFonts.poppins(
+              style: TextStyle(
                 color: AppColors.title,
+                fontFamily: 'Poppins',
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
               ),

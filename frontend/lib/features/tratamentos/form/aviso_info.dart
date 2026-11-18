@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../theme/app_theme.dart';
 
@@ -25,9 +24,10 @@ class AvisoInfo extends StatelessWidget {
           Expanded(
             child: Text(
               texto,
-              style: GoogleFonts.poppins(
-                fontSize: 9,
+              style: TextStyle(
                 color: AppColors.darkCiano,
+                fontFamily: 'Poppins',
+                fontSize: 9,
               ),
             ),
           ),

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../../app/rotas.dart';
@@ -114,9 +113,10 @@ class _CadastroScreenState extends State<CadastroScreen> {
           children: [
             Text(
               'Quero me cadastrar como:',
-              style: GoogleFonts.poppins(
+              style: TextStyle(
                 color: AppColors.inputText,
                 fontSize: 13,
+                fontFamily: 'Poppins',
                 fontWeight: FontWeight.w600,
               ),
             ),

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../theme/app_theme.dart';
 import '../../../widgets/app_snackbar.dart';
 import '../frequencia.dart';
 
-TextStyle get _estiloRotulo => GoogleFonts.poppins(
+TextStyle get _estiloRotulo => TextStyle(
       color: AppColors.inputText,
+      fontFamily: 'Poppins',
       fontSize: 12,
       fontWeight: FontWeight.w600,
     );
@@ -15,7 +15,7 @@ Widget _erro(String texto) => Padding(
       padding: const EdgeInsets.only(top: 5),
       child: Text(
         texto,
-        style: GoogleFonts.poppins(color: AppColors.error, fontSize: 10),
+        style: TextStyle(color: AppColors.error, fontFamily: 'Poppins', fontSize: 10),
       ),
     );
 
@@ -168,8 +168,9 @@ class _ChipHorario extends StatelessWidget {
               const SizedBox(width: 4),
               Text(
                 horario,
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                   color: Colors.white,
+                  fontFamily: 'Poppins',
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
                 ),
@@ -260,8 +261,9 @@ class _ChipDia extends StatelessWidget {
           child: Center(
             child: Text(
               nome,
-              style: GoogleFonts.poppins(
+              style: TextStyle(
                 color: marcado ? Colors.white : AppColors.gray,
+                fontFamily: 'Poppins',
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
               ),

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../theme/app_theme.dart';
 
@@ -50,7 +49,7 @@ class CabecalhoEtapa extends StatelessWidget {
             ),
             Text(
               'Etapa $etapa de $total',
-              style: GoogleFonts.poppins(fontSize: 10, color: AppColors.gray),
+              style: TextStyle(fontSize: 10, fontFamily: 'Poppins',color: AppColors.gray),
             ),
           ],
         ),
@@ -73,7 +72,8 @@ class CabecalhoEtapa extends StatelessWidget {
                 children: [
                   Text(
                     titulo,
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
                       fontSize: 22,
                       fontWeight: FontWeight.w700,
                       color: AppColors.inputText,
@@ -82,7 +82,8 @@ class CabecalhoEtapa extends StatelessWidget {
                   ),
                   Text(
                     subtitulo,
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
                       fontSize: 10,
                       color: AppColors.gray,
                     ),

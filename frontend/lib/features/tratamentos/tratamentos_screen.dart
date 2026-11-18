@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../../app/rotas.dart';
@@ -50,7 +49,8 @@ class _TratamentosScreenState extends State<TratamentosScreen> {
             const SizedBox(height: 25),
             Text(
               'Meus tratamentos:',
-              style: GoogleFonts.poppins(
+              style: TextStyle(
+                fontFamily: 'Poppins',
                 color: AppColors.title,
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
@@ -165,8 +165,9 @@ class _Abas extends StatelessWidget {
             ),
             child: Text(
               texto,
-              style: GoogleFonts.poppins(
+              style: TextStyle(
                 color: ativa ? Colors.white : AppColors.darkCiano,
+                fontFamily: 'Poppins',
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),

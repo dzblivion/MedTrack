@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-
 import '../theme/app_theme.dart';
 
 /// Avatar com a inicial + nome, no topo das abas do app (como no Figma).
@@ -36,7 +34,8 @@ class CabecalhoUsuario extends StatelessWidget {
           ),
           child: Text(
             inicial,
-            style: GoogleFonts.poppins(
+            style: TextStyle(
+              fontFamily: 'Poppins',
               color: Colors.white,
               fontSize: 20,
               fontWeight: FontWeight.w600,
@@ -51,7 +50,8 @@ class CabecalhoUsuario extends StatelessWidget {
               if (subtitulo == null)
                 Text(
                   'Olá,',
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
                     color: AppColors.gray,
                     fontSize: 10,
                     fontWeight: FontWeight.w400,
@@ -61,7 +61,8 @@ class CabecalhoUsuario extends StatelessWidget {
                 nome,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.poppins(
+                style: TextStyle(
+                  fontFamily: 'Poppins',
                   color: AppColors.title,
                   fontSize: 17,
                   fontWeight: FontWeight.w800,
@@ -72,7 +73,8 @@ class CabecalhoUsuario extends StatelessWidget {
                   subtitulo!,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
                     color: AppColors.gray,
                     fontSize: 10,
                   ),

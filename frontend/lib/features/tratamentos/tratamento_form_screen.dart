@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/api/api_client.dart';
@@ -164,7 +163,8 @@ class _TratamentoFormScreenState extends State<TratamentoFormScreen> {
                     const SizedBox(height: 6),
                     Text(
                       '*Campos obrigatórios',
-                      style: GoogleFonts.poppins(
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
                         fontSize: 9,
                         color: AppColors.gray,
                       ),

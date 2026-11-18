@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../theme/app_theme.dart';
 
@@ -26,8 +25,9 @@ class BotaoCabecalho extends StatelessWidget {
         foregroundColor: Colors.white,
         shadowColor: Colors.black.withValues(alpha: 0.6),
         elevation: 6,
-        textStyle: GoogleFonts.poppins(
+        textStyle: TextStyle(
           fontSize: 11.5,
+          fontFamily: 'Poppins',
           fontWeight: FontWeight.w600,
         ),
         // Em formato de pílula, na proporção do avatar (48) ao lado.

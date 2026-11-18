@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../theme/app_theme.dart';
 import '../../doses/dose.dart';
@@ -50,7 +49,7 @@ class CardProximaDose extends StatelessWidget {
               semDoses
                   ? 'Nenhuma dose agendada para hoje.'
                   : 'Todas as doses de hoje foram registradas.',
-              style: GoogleFonts.poppins(color: AppColors.gray, fontSize: 12),
+              style: TextStyle(color: AppColors.gray, fontFamily: 'Poppins', fontSize: 12),
             )
           else
             ..._dose(dose),
@@ -66,8 +65,9 @@ class CardProximaDose extends StatelessWidget {
         children: [
           Text(
             dose.horario,
-            style: GoogleFonts.poppins(
+            style: TextStyle(
               color: AppColors.ciano,
+              fontFamily: 'Poppins',
               fontSize: 22,
               fontWeight: FontWeight.w700,
             ),
@@ -82,8 +82,9 @@ class CardProximaDose extends StatelessWidget {
               ),
               child: Text(
                 'atrasada',
-                style: GoogleFonts.poppins(
+                style: TextStyle(
                   color: AppColors.error,
+                  fontFamily: 'Poppins',
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
                 ),
@@ -94,15 +95,16 @@ class CardProximaDose extends StatelessWidget {
       ),
       Text(
         dose.medicamento,
-        style: GoogleFonts.poppins(
+        style: TextStyle(
           color: AppColors.inputText,
+          fontFamily: 'Poppins',
           fontSize: 13,
           fontWeight: FontWeight.w600,
         ),
       ),
       Text(
         dose.detalhe,
-        style: GoogleFonts.poppins(color: AppColors.gray, fontSize: 10),
+        style: TextStyle(color: AppColors.gray, fontFamily: 'Poppins', fontSize: 10),
       ),
       const SizedBox(height: 12),
       // O backend recusa registrar antes do horário.
@@ -111,7 +113,7 @@ class CardProximaDose extends StatelessWidget {
           padding: const EdgeInsets.only(bottom: 8),
           child: Text(
             'Você poderá registrar a partir das ${dose.horario}.',
-            style: GoogleFonts.poppins(color: AppColors.gray, fontSize: 10),
+            style: TextStyle(color: AppColors.gray, fontFamily: 'Poppins', fontSize: 10),
           ),
         ),
       Row(
@@ -155,7 +157,8 @@ class _Botao extends StatelessWidget {
         disabledForegroundColor: Colors.white,
         minimumSize: const Size.fromHeight(34),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-        textStyle: GoogleFonts.poppins(
+        textStyle: TextStyle(
+          fontFamily: 'Poppins',
           fontSize: 12,
           fontWeight: FontWeight.w600,
         ),

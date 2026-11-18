@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../theme/app_theme.dart';
 
@@ -40,8 +39,9 @@ class AppDropdown extends StatelessWidget {
       children: [
         Text(
           label,
-          style: GoogleFonts.poppins(
+          style: TextStyle(
             color: AppColors.inputText,
+            fontFamily: 'Poppins',
             fontSize: 12,
             fontWeight: FontWeight.w600,
           ),
@@ -58,7 +58,8 @@ class AppDropdown extends StatelessWidget {
           requestFocusOnTap: false,
           menuHeight: 180,
           alignmentOffset: const Offset(0, 4),
-          textStyle: GoogleFonts.poppins(
+          textStyle: TextStyle(
+            fontFamily: 'Poppins',
             color: AppColors.inputText,
             fontSize: 10,
           ),
@@ -85,11 +86,13 @@ class AppDropdown extends StatelessWidget {
               minWidth: 30,
               minHeight: 0,
             ),
-            hintStyle: GoogleFonts.poppins(
+            hintStyle: TextStyle(
+              fontFamily: 'Poppins',
               color: AppColors.hintText,
               fontSize: 10,
             ),
-            errorStyle: GoogleFonts.poppins(
+            errorStyle: TextStyle(
+              fontFamily: 'Poppins',
               color: AppColors.error,
               fontSize: 10,
             ),
@@ -117,7 +120,7 @@ class AppDropdown extends StatelessWidget {
                 label: rotulo?.call(opcao) ?? opcao,
                 style: MenuItemButton.styleFrom(
                   foregroundColor: AppColors.inputText,
-                  textStyle: GoogleFonts.poppins(fontSize: 11),
+                  textStyle: TextStyle(fontSize: 11, fontFamily: 'Poppins'),
                   minimumSize: const Size.fromHeight(36),
                   visualDensity: VisualDensity.compact,
                 ),

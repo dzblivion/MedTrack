@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../theme/app_theme.dart';
 
@@ -27,8 +26,9 @@ class Cartao extends StatelessWidget {
 }
 
 /// Título dos cards ("Próxima dose", "Adesão de hoje").
-TextStyle get estiloTituloCartao => GoogleFonts.poppins(
+TextStyle get estiloTituloCartao => TextStyle(
       color: AppColors.darkCiano,
+      fontFamily: 'Poppins',
       fontSize: 14,
       fontWeight: FontWeight.w600,
     );
