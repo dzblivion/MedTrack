@@ -22,4 +22,41 @@ String formatarDataApi(DateTime data) =>
 double? lerNumero(String texto) =>
     double.tryParse(texto.trim().replaceAll(',', '.'));
 
+const _diasDaSemana = [
+  'segunda',
+  'terça',
+  'quarta',
+  'quinta',
+  'sexta',
+  'sábado',
+  'domingo',
+];
+
+const _meses = [
+  'janeiro',
+  'fevereiro',
+  'março',
+  'abril',
+  'maio',
+  'junho',
+  'julho',
+  'agosto',
+  'setembro',
+  'outubro',
+  'novembro',
+  'dezembro',
+];
+
+/// "quinta".
+String diaDaSemana(DateTime data) => _diasDaSemana[data.weekday - 1];
+
+/// "novembro".
+String nomeDoMes(DateTime data) => _meses[data.month - 1];
+
+/// "Novembro de 2026".
+String formatarMesAno(DateTime data) {
+  final mes = nomeDoMes(data);
+  return '${mes[0].toUpperCase()}${mes.substring(1)} de ${data.year}';
+}
+
 String _doisDigitos(int valor) => valor.toString().padLeft(2, '0');

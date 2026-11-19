@@ -75,6 +75,31 @@ void main() {
     expect(doses[1].horario, '08:00');
   });
 
+  test('o histórico junta as doses de todos os tratamentos, mais recentes '
+      'primeiro', () async {
+    final api = ApiDosesFake({
+      '/tratamentos/1/doses': {
+        'doses_atrasadas': [],
+        'proximas_doses': [],
+        'historico': [dose(10, '2026-11-10T08:00:00', 'tomada')],
+      },
+      '/tratamentos/3/doses': {
+        'doses_atrasadas': [dose(30, '2026-11-12T09:00:00', 'pendente')],
+        'proximas_doses': [],
+        'historico': [],
+      },
+    });
+    final tratamentos = TratamentoFake([
+      tratamentoExemplo(id: 1, status: StatusTratamento.concluido),
+      tratamentoExemplo(id: 3, status: StatusTratamento.cancelado),
+    ]);
+
+    final doses = await DoseRepository(api, tratamentos).todas();
+
+    // Concluídos e cancelados também entram no histórico.
+    expect([for (final d in doses) d.id], [30, 10]);
+  });
+
   test('registrar manda o status no formato do backend', () async {
     final api = ApiDosesFake({});
     final repositorio = DoseRepository(api, TratamentoFake());

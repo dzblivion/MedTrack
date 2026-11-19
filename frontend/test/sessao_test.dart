@@ -53,7 +53,7 @@ void main() {
     expect(find.text('Seu tratamento de hoje:'), findsNothing);
 
     await tocar(tester, 'Histórico');
-    expect(find.text('Em construção'), findsOneWidget);
+    expect(find.text('Seu histórico:'), findsOneWidget);
 
     await tocar(tester, 'Início');
     expect(find.text('Seu tratamento de hoje:'), findsOneWidget);

@@ -12,6 +12,8 @@ import '../features/auth/recuperar_senha/verificar_codigo_screen.dart';
 import '../features/auth/sessao_controller.dart';
 import '../features/doses/dose_repository.dart';
 import '../features/home/home_controller.dart';
+import '../features/historico/historico_controller.dart';
+import '../features/historico/historico_screen.dart';
 import '../features/home/home_screen.dart';
 import '../features/perfil/perfil_screen.dart';
 import '../features/perfil/texto_legal_screen.dart';
@@ -23,7 +25,6 @@ import '../features/tratamentos/tratamento_form_screen.dart';
 import '../features/tratamentos/tratamento_repository.dart';
 import '../features/tratamentos/tratamentos_controller.dart';
 import '../features/tratamentos/tratamentos_screen.dart';
-import '../widgets/em_construcao.dart';
 import 'app_shell.dart';
 import 'rotas.dart';
 
@@ -111,11 +112,20 @@ GoRouter criarRouter(
         ),
       ),
       StatefulShellRoute.indexedStack(
-        // A Home fica acima do menu para o menu poder recarregá-la ao abrir
-        // a aba Início (ex.: depois de cadastrar um tratamento).
-        builder: (context, state, navegacao) => ChangeNotifierProvider(
-          create: (context) =>
-              HomeController(context.read<DoseRepository>())..carregar(),
+        // Home e Histórico ficam acima do menu para o menu poder recarregá-los
+        // ao abrir a aba (ex.: depois de cadastrar um tratamento). O
+        // Histórico só é criado (e busca os dados) quando aberto.
+        builder: (context, state, navegacao) => MultiProvider(
+          providers: [
+            ChangeNotifierProvider(
+              create: (context) =>
+                  HomeController(context.read<DoseRepository>())..carregar(),
+            ),
+            ChangeNotifierProvider(
+              create: (context) =>
+                  HistoricoController(context.read<DoseRepository>()),
+            ),
+          ],
           child: AppShell(navegacao: navegacao),
         ),
         branches: [
@@ -169,8 +179,7 @@ GoRouter criarRouter(
             routes: [
               GoRoute(
                 path: Rotas.historico,
-                builder: (context, state) =>
-                    const EmConstrucao(titulo: 'Histórico'),
+                builder: (context, state) => const HistoricoScreen(),
               ),
             ],
           ),

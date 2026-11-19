@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../features/historico/historico_controller.dart';
 import '../features/home/home_controller.dart';
 import '../theme/app_theme.dart';
 
@@ -19,10 +20,13 @@ class AppShell extends StatelessWidget {
   ];
 
   static const _inicio = 0;
+  static const _historico = 2;
 
   void _abrir(BuildContext context, int indice) {
-    // Abrir o Início sempre traz as doses atualizadas.
+    // Abrir o Início ou o Histórico sempre traz as doses atualizadas
+    // (ex.: uma dose marcada numa aba aparece na outra).
     if (indice == _inicio) context.read<HomeController>().carregar();
+    if (indice == _historico) context.read<HistoricoController>().carregar();
 
     // Tocar na aba já aberta volta para o começo dela.
     navegacao.goBranch(

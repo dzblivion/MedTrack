@@ -15,15 +15,27 @@ class DoseRepository {
   /// (o Antonio está fazendo). Por enquanto buscamos as doses de cada
   /// tratamento e juntamos; quando a rota chegar, só este método muda.
   Future<List<Dose>> doDia(DateTime dia) async {
-    final ativos = (await _tratamentos.listar())
-        .where((t) => t.status == StatusTratamento.ativo);
-    final porTratamento = await Future.wait(ativos.map(_dosesDe));
-
+    final doses = await _dosesDos(
+      (t) => t.status == StatusTratamento.ativo,
+    );
     return [
-      for (final doses in porTratamento)
-        for (final dose in doses)
-          if (_mesmoDia(dose.agendadaPara, dia)) dose,
+      for (final dose in doses)
+        if (_mesmoDia(dose.agendadaPara, dia)) dose,
     ]..sort((a, b) => a.agendadaPara.compareTo(b.agendadaPara));
+  }
+
+  /// Todas as doses de todos os tratamentos, inclusive concluídos,
+  /// pausados e cancelados, da mais recente para a mais antiga.
+  /// (Mesma limitação de [doDia]: hoje o backend não filtra por data.)
+  Future<List<Dose>> todas() async {
+    final doses = await _dosesDos((_) => true);
+    return doses..sort((a, b) => b.agendadaPara.compareTo(a.agendadaPara));
+  }
+
+  Future<List<Dose>> _dosesDos(bool Function(Tratamento) incluir) async {
+    final tratamentos = (await _tratamentos.listar()).where(incluir);
+    final porTratamento = await Future.wait(tratamentos.map(_dosesDe));
+    return [for (final doses in porTratamento) ...doses];
   }
 
   Future<void> registrar(int id, {required bool tomada}) => _api.patch(

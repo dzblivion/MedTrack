@@ -205,6 +205,13 @@ class DoseFake extends DoseRepository {
     return doses;
   }
 
+  /// O histórico usa a mesma lista, da mais recente para a mais antiga.
+  @override
+  Future<List<Dose>> todas() async {
+    final lista = await doDia(DateTime.now());
+    return [...lista]..sort((a, b) => b.agendadaPara.compareTo(a.agendadaPara));
+  }
+
   @override
   Future<void> registrar(int id, {required bool tomada}) async {
     if (erroRegistrar != null) throw erroRegistrar!;
