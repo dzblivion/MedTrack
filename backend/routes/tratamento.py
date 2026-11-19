@@ -448,6 +448,36 @@ def gerar_doses(frequencia, a_partir_de=None):
     return doses, None
 
 
+def normalizar_horario_banco(valor):
+    """Converte TIME do MySQL para HH:MM:SS, inclusive quando a hora vem sem zero."""
+    if isinstance(valor, timedelta):
+        total_segundos = int(valor.total_seconds())
+        if not 0 <= total_segundos < 24 * 60 * 60:
+            raise ValueError("Horário do banco fora do intervalo de um dia")
+        horas, restante = divmod(total_segundos, 60 * 60)
+        minutos, segundos = divmod(restante, 60)
+        return f"{horas:02d}:{minutos:02d}:{segundos:02d}"
+
+    if isinstance(valor, horario_time):
+        return valor.replace(microsecond=0).strftime("%H:%M:%S")
+
+    partes = str(valor).strip().split(":")
+    if len(partes) not in {2, 3}:
+        raise ValueError("Formato de horário inválido retornado pelo banco")
+
+    try:
+        horas = int(partes[0])
+        minutos = int(partes[1])
+        segundos = int(float(partes[2])) if len(partes) == 3 else 0
+    except ValueError as erro:
+        raise ValueError("Formato de horário inválido retornado pelo banco") from erro
+
+    if not 0 <= horas <= 23 or not 0 <= minutos <= 59 or not 0 <= segundos <= 59:
+        raise ValueError("Horário do banco fora do intervalo de um dia")
+
+    return f"{horas:02d}:{minutos:02d}:{segundos:02d}"
+
+
 def buscar_frequencia_ativa(cursor, tratamento_id):
     cursor.execute(
         """
@@ -472,7 +502,10 @@ def buscar_frequencia_ativa(cursor, tratamento_id):
         """,
         (regra["id"],),
     )
-    horarios = [str(item["horario"]) for item in cursor.fetchall()]
+    horarios = [
+        normalizar_horario_banco(item["horario"])
+        for item in cursor.fetchall()
+    ]
 
     cursor.execute(
         """
@@ -532,25 +565,36 @@ def repor_doses_continuas(cursor, usuario_id=None, tratamento_id=None):
     doses_inseridas = 0
 
     for tratamento_atual in tratamentos:
-        frequencia = buscar_frequencia_ativa(cursor, tratamento_atual["id"])
-        if not frequencia:
-            logger.warning(
-                "Tratamento contínuo %s não possui frequência ativa",
-                tratamento_atual["id"],
-            )
-            continue
+        tratamento_id_atual = tratamento_atual["id"]
+        try:
+            frequencia = buscar_frequencia_ativa(cursor, tratamento_id_atual)
+            if not frequencia:
+                logger.warning(
+                    "Tratamento contínuo %s não possui frequência ativa",
+                    tratamento_id_atual,
+                )
+                continue
 
-        doses, erro = gerar_doses(frequencia, a_partir_de=agora)
-        if erro:
-            raise ValueError(
-                f"Não foi possível gerar doses do tratamento {tratamento_atual['id']}: {erro}"
-            )
+            doses, erro = gerar_doses(frequencia, a_partir_de=agora)
+            if erro:
+                logger.error(
+                    "Não foi possível gerar doses do tratamento contínuo %s: %s",
+                    tratamento_id_atual,
+                    erro,
+                )
+                continue
 
-        doses_inseridas += inserir_doses_pendentes(
-            cursor,
-            tratamento_atual["id"],
-            doses,
-        )
+            doses_inseridas += inserir_doses_pendentes(
+                cursor,
+                tratamento_id_atual,
+                doses,
+            )
+        except Exception:
+            # Um cadastro inconsistente não deve interromper os demais tratamentos.
+            logger.exception(
+                "Erro ao repor doses do tratamento contínuo %s",
+                tratamento_id_atual,
+            )
 
     return doses_inseridas
 
