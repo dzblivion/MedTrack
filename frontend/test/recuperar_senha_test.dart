@@ -20,7 +20,7 @@ void main() {
     await ateTelaDoCodigo(tester, auth);
 
     expect(find.textContaining('m@m.com', findRichText: true), findsOneWidget);
-    await tester.enterText(find.byType(TextFormField), '123456');
+    await digitarCodigo(tester, '123456');
     await tocar(tester, 'Confirmar código');
 
     await tester.enterText(find.byType(TextFormField).at(0), 'novaSenha1');
@@ -57,7 +57,7 @@ void main() {
     final auth = AuthFake();
     await ateTelaDoCodigo(tester, auth);
 
-    await tester.enterText(find.byType(TextFormField), '123');
+    await digitarCodigo(tester, '123');
     await tocar(tester, 'Confirmar código');
 
     expect(find.text('O código tem 6 dígitos'), findsOneWidget);
@@ -70,7 +70,7 @@ void main() {
       AuthFake(erroVerificar: const ApiException('Código inválido!', 400)),
     );
 
-    await tester.enterText(find.byType(TextFormField), '999999');
+    await digitarCodigo(tester, '999999');
     await tocar(tester, 'Confirmar código');
 
     expect(find.text('Código inválido!'), findsOneWidget);
@@ -93,7 +93,7 @@ void main() {
   testWidgets('acusa senhas diferentes na nova senha', (tester) async {
     final auth = AuthFake();
     await ateTelaDoCodigo(tester, auth);
-    await tester.enterText(find.byType(TextFormField), '123456');
+    await digitarCodigo(tester, '123456');
     await tocar(tester, 'Confirmar código');
 
     await tester.enterText(find.byType(TextFormField).at(0), 'novaSenha1');

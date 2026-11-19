@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:frontend/app/rotas.dart';
+import 'package:frontend/core/api/api_client.dart';
+import 'package:frontend/features/auth/widgets/campo_codigo.dart';
 
 import 'helpers.dart';
 
@@ -35,6 +37,14 @@ void main() {
     await tester.tap(checkbox);
   }
 
+  /// Preenche o cadastro de usuário e chega na tela do código.
+  Future<void> chegarNoCodigo(WidgetTester tester, AuthFake auth) async {
+    await abrirCadastro(tester, auth, tamanhoCelular: false);
+    await preencherUsuario(tester);
+    await aceitarTermos(tester);
+    await tocar(tester, 'Criar minha conta');
+  }
+
   testWidgets('mostra os campos básicos e esconde os de profissional', (
     tester,
   ) async {
@@ -60,14 +70,16 @@ void main() {
     expect(find.text('UF do registro'), findsOneWidget);
   });
 
-  testWidgets('não envia se os termos não foram aceitos', (tester) async {
+  testWidgets('não pede o código se os termos não foram aceitos', (
+    tester,
+  ) async {
     final auth = AuthFake();
     await abrirCadastro(tester, auth);
 
     await preencherUsuario(tester);
     await tocar(tester, 'Criar minha conta');
 
-    expect(auth.chamouUsuario, isFalse);
+    expect(auth.codigosCadastro, isEmpty);
     expect(
       find.text('Você precisa aceitar os termos para continuar.'),
       findsOneWidget,
@@ -84,17 +96,139 @@ void main() {
     expect(find.text('As senhas não coincidem'), findsOneWidget);
   });
 
-  testWidgets('cadastra usuário comum e abre o login', (tester) async {
+  testWidgets('usuário: pede o código e só cria a conta com ele', (
+    tester,
+  ) async {
     final auth = AuthFake();
-    await abrirCadastro(tester, auth, tamanhoCelular: false);
+    await chegarNoCodigo(tester, auth);
 
-    await preencherUsuario(tester);
-    await aceitarTermos(tester);
-    await tocar(tester, 'Criar minha conta');
+    expect(auth.codigosCadastro, ['m@m.com']);
+    expect(auth.cadastro, isNull);
+    expect(find.text('Confirme seu e-mail'), findsOneWidget);
+    expect(find.textContaining('m@m.com'), findsOneWidget);
 
-    expect(auth.chamouUsuario, isTrue);
+    await digitarCodigo(tester, '123456');
+    await tocar(tester, 'Confirmar e criar conta');
+
+    expect(auth.cadastro?.profissional, isFalse);
+    expect(auth.cadastro?.json, {
+      'nome': 'Maria',
+      'email': 'm@m.com',
+      'senha': '12345678',
+      'codigo': '123456',
+    });
     expect(find.text('Bem-vindo de volta!'), findsOneWidget);
     expect(find.text('Conta criada com sucesso! Faça login.'), findsOneWidget);
+  });
+
+  testWidgets('o código usa o teclado numérico e aceita só 6 números', (
+    tester,
+  ) async {
+    await chegarNoCodigo(tester, AuthFake());
+
+    final campo = tester.widget<TextField>(
+      find.descendant(
+        of: find.byType(CampoCodigo),
+        matching: find.byType(TextField),
+      ),
+    );
+    expect(campo.keyboardType, TextInputType.number);
+
+    // Letras são ignoradas e o que passa de 6 dígitos é cortado.
+    await digitarCodigo(tester, '12a3456789');
+    await tester.pump();
+
+    expect(campo.controller?.text, '123456');
+    for (final digito in ['1', '2', '3', '4', '5', '6']) {
+      expect(find.text(digito), findsOneWidget);
+    }
+    expect(find.text('7'), findsNothing);
+  });
+
+  testWidgets('código precisa ter 6 dígitos', (tester) async {
+    final auth = AuthFake();
+    await chegarNoCodigo(tester, auth);
+
+    await tocar(tester, 'Confirmar e criar conta');
+    expect(find.text('Informe o código'), findsOneWidget);
+
+    await digitarCodigo(tester, '123');
+    await tocar(tester, 'Confirmar e criar conta');
+    expect(find.text('O código tem 6 dígitos'), findsOneWidget);
+    expect(auth.cadastro, isNull);
+  });
+
+  testWidgets('código errado mostra a mensagem e continua na tela', (
+    tester,
+  ) async {
+    final auth = AuthFake()
+      ..erroCadastrar = const ApiException('Código inválido!', 400);
+    await chegarNoCodigo(tester, auth);
+
+    await digitarCodigo(tester, '999999');
+    await tocar(tester, 'Confirmar e criar conta');
+
+    expect(find.text('Código inválido!'), findsOneWidget);
+    expect(find.text('Confirme seu e-mail'), findsOneWidget);
+  });
+
+  testWidgets('e-mail já cadastrado: avisa e fica no cadastro', (tester) async {
+    final auth = AuthFake()
+      ..erroCodigoCadastro = const ApiException('E-mail já cadastrado!', 409);
+    await chegarNoCodigo(tester, auth);
+
+    expect(find.text('E-mail já cadastrado!'), findsOneWidget);
+    expect(find.text('Crie sua conta!'), findsOneWidget);
+  });
+
+  testWidgets('código pedido há pouco (429): segue para digitar o mesmo', (
+    tester,
+  ) async {
+    final auth = AuthFake()
+      ..erroCodigoCadastro = const ApiException(
+        'Aguarde 60 segundos antes de solicitar outro código.',
+        429,
+      );
+    await chegarNoCodigo(tester, auth);
+
+    expect(find.text('Confirme seu e-mail'), findsOneWidget);
+  });
+
+  testWidgets('reenviar só libera depois de 60 segundos', (tester) async {
+    final auth = AuthFake();
+    await chegarNoCodigo(tester, auth);
+
+    expect(find.text('Reenviar em 60s'), findsOneWidget);
+    expect(find.text('Reenviar código'), findsNothing);
+
+    await tester.pump(const Duration(seconds: 30));
+    expect(find.text('Reenviar em 30s'), findsOneWidget);
+
+    await tester.pump(const Duration(seconds: 30));
+    await tocar(tester, 'Reenviar código');
+
+    expect(auth.codigosCadastro, ['m@m.com', 'm@m.com']);
+    expect(find.text('Enviamos um novo código para o seu e-mail.'), findsOneWidget);
+    expect(find.text('Reenviar em 60s'), findsOneWidget);
+  });
+
+  testWidgets('voltar do código mantém o que foi preenchido', (tester) async {
+    await chegarNoCodigo(tester, AuthFake());
+
+    await tester.tap(find.byTooltip('Voltar'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Crie sua conta!'), findsOneWidget);
+    expect(find.widgetWithText(TextFormField, 'Maria'), findsOneWidget);
+    expect(find.widgetWithText(TextFormField, 'm@m.com'), findsOneWidget);
+  });
+
+  testWidgets('abrir a tela do código sem o cadastro volta para ele', (
+    tester,
+  ) async {
+    await abrirApp(tester, rota: Rotas.confirmarCadastro);
+
+    expect(find.text('Crie sua conta!'), findsOneWidget);
   });
 
   testWidgets('pelo login, Criar Conta e depois Entrar volta ao login', (
@@ -109,7 +243,9 @@ void main() {
     expect(find.text('Bem-vindo de volta!'), findsOneWidget);
   });
 
-  testWidgets('cadastra profissional com os campos extras', (tester) async {
+  testWidgets('profissional: envia os campos extras junto com o código', (
+    tester,
+  ) async {
     final auth = AuthFake();
     await abrirCadastro(tester, auth, tamanhoCelular: false);
 
@@ -139,7 +275,19 @@ void main() {
     await aceitarTermos(tester);
     await tocar(tester, 'Criar minha conta');
 
-    expect(auth.chamouProfissional, isTrue);
+    await digitarCodigo(tester, '654321');
+    await tocar(tester, 'Confirmar e criar conta');
+
+    expect(auth.cadastro?.profissional, isTrue);
+    expect(auth.cadastro?.json, {
+      'nome': 'Dra. Ana',
+      'email': 'ana@m.com',
+      'senha': '12345678',
+      'codigo': '654321',
+      'profissao': 'Médico(a)',
+      'registro': 'CRM1234',
+      'uf_registro': 'AC',
+    });
     expect(find.text('Bem-vindo de volta!'), findsOneWidget);
   });
 }

@@ -1,4 +1,5 @@
 import '../../core/api/api_client.dart';
+import 'dados_cadastro.dart';
 import 'usuario.dart';
 
 typedef Login = ({String token, Usuario usuario});
@@ -17,34 +18,17 @@ class AuthRepository {
     );
   }
 
-  Future<void> cadastrarUsuario({
-    required String nome,
-    required String email,
-    required String senha,
-  }) {
-    return _api.post('/cadastrar-usuario', {
-      'nome': nome,
-      'email': email,
-      'senha': senha,
-    });
+  /// Envia o código de 6 dígitos para confirmar o e-mail do cadastro.
+  Future<void> solicitarCodigoCadastro(String email) {
+    return _api.post('/solicitar-codigo-cadastro', {'email': email});
   }
 
-  Future<void> cadastrarProfissional({
-    required String nome,
-    required String email,
-    required String senha,
-    required String profissao,
-    required String registro,
-    required String ufRegistro,
-  }) {
-    return _api.post('/cadastrar-profissional', {
-      'nome': nome,
-      'email': email,
-      'senha': senha,
-      'profissao': profissao,
-      'registro': registro,
-      'uf_registro': ufRegistro,
-    });
+  /// Cria a conta; o backend confere o [codigo] enviado por e-mail.
+  Future<void> cadastrar(DadosCadastro dados, String codigo) {
+    final rota = dados.profissional == null
+        ? '/cadastrar-usuario'
+        : '/cadastrar-profissional';
+    return _api.post(rota, dados.toJson(codigo));
   }
 
   Future<void> solicitarCodigo(String email) {

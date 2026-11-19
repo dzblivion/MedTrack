@@ -12,6 +12,7 @@ import '../../widgets/app_text_field.dart';
 import 'auth_repository.dart';
 import 'auth_validators.dart';
 import 'br_estados.dart';
+import 'dados_cadastro.dart';
 import 'profissoes_saude.dart';
 import 'widgets/auth_layout.dart';
 import 'widgets/olho_senha.dart';
@@ -64,33 +65,36 @@ class _CadastroScreenState extends State<CadastroScreen> {
 
     if (!formValido || !_aceitaTermos) return;
 
+    final dados = DadosCadastro(
+      nome: _nomeController.text.trim(),
+      email: _emailController.text.trim(),
+      senha: _senhaController.text,
+      profissional: _ehProfissional
+          ? (
+              profissao: _profissao!,
+              registro: _registroController.text.trim(),
+              ufRegistro: _ufRegistro!,
+            )
+          : null,
+    );
+
     setState(() => _carregando = true);
     final auth = context.read<AuthRepository>();
 
     try {
-      if (_ehProfissional) {
-        await auth.cadastrarProfissional(
-          nome: _nomeController.text.trim(),
-          email: _emailController.text.trim(),
-          senha: _senhaController.text,
-          profissao: _profissao!,
-          registro: _registroController.text.trim(),
-          ufRegistro: _ufRegistro!,
-        );
-      } else {
-        await auth.cadastrarUsuario(
-          nome: _nomeController.text.trim(),
-          email: _emailController.text.trim(),
-          senha: _senhaController.text,
-        );
-      }
-
+      // A conta só é criada na próxima tela, com o código do e-mail.
+      await auth.solicitarCodigoCadastro(dados.email);
       if (!mounted) return;
-
-      AppSnackBar.info(context, 'Conta criada com sucesso! Faça login.');
-      _irParaLogin();
+      context.push(Rotas.confirmarCadastro, extra: dados);
     } on ApiException catch (e) {
-      if (mounted) AppSnackBar.erro(context, e.mensagem);
+      if (!mounted) return;
+      // 429: um código já foi enviado há menos de 1 minuto (ex.: voltou e
+      // tocou de novo). Ele continua valendo, então segue para digitá-lo.
+      if (e.statusCode == 429) {
+        context.push(Rotas.confirmarCadastro, extra: dados);
+      } else {
+        AppSnackBar.erro(context, e.mensagem);
+      }
     } catch (_) {
       if (mounted) {
         AppSnackBar.erro(context, 'Algo deu errado. Tente novamente.');

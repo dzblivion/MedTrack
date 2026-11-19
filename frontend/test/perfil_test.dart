@@ -65,7 +65,7 @@ void main() {
     expect(find.widgetWithText(TextFormField, 'm@m.com'), findsOneWidget);
 
     await tocar(tester, 'Enviar código');
-    await tester.enterText(find.byType(TextFormField), '123456');
+    await digitarCodigo(tester, '123456');
     await tocar(tester, 'Confirmar código');
     await tester.enterText(find.byType(TextFormField).at(0), 'novaSenha1');
     await tester.enterText(find.byType(TextFormField).at(1), 'novaSenha1');

@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../features/auth/cadastro_screen.dart';
+import '../features/auth/confirmar_cadastro_screen.dart';
+import '../features/auth/dados_cadastro.dart';
 import '../features/auth/login_screen.dart';
 import '../features/auth/recuperar_senha/nova_senha_screen.dart';
 import '../features/auth/recuperar_senha/solicitar_codigo_screen.dart';
@@ -64,6 +66,14 @@ GoRouter criarRouter(
       GoRoute(
         path: Rotas.cadastro,
         builder: (context, state) => const CadastroScreen(),
+      ),
+      // Sem os dados do cadastro (ex.: página recarregada), recomeça por ele.
+      GoRoute(
+        path: Rotas.confirmarCadastro,
+        redirect: (context, state) =>
+            state.extra is DadosCadastro ? null : Rotas.cadastro,
+        builder: (context, state) =>
+            ConfirmarCadastroScreen(dados: state.extra as DadosCadastro),
       ),
       GoRoute(
         path: Rotas.recuperarSenha,

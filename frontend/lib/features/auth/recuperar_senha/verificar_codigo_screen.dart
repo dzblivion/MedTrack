@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -8,11 +7,11 @@ import '../../../core/api/api_client.dart';
 import '../../../theme/app_theme.dart';
 import '../../../widgets/app_button.dart';
 import '../../../widgets/app_snackbar.dart';
-import '../../../widgets/app_text_field.dart';
 import '../auth_repository.dart';
 import '../auth_validators.dart';
 import '../widgets/auth_layout.dart';
 import '../widgets/auth_link.dart';
+import '../widgets/campo_codigo.dart';
 import 'nova_senha_screen.dart';
 import 'voltar_recuperacao.dart';
 
@@ -105,26 +104,14 @@ class _VerificarCodigoScreenState extends State<VerificarCodigoScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 18),
-            AppTextField(
-              label: 'Código',
-              hint: '000000',
+            const SizedBox(height: 24),
+            CampoCodigo(
               controller: _codigoController,
-              keyboardType: TextInputType.number,
-              textInputAction: TextInputAction.done,
-              autofillHints: const [AutofillHints.oneTimeCode],
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-                LengthLimitingTextInputFormatter(6),
-              ],
               validator: AuthValidators.codigo,
-              onFieldSubmitted: (_) => _confirmar(),
+              onSubmitted: (_) => _confirmar(),
             ),
-            const SizedBox(height: 8),
-            const Text(
-              'O código vale por 10 minutos.',
-              style: TextStyle(color: AppColors.gray, fontSize: 10),
-            ),
+            const SizedBox(height: 16),
+            const AjudaCodigo(),
             const Spacer(),
             const SizedBox(height: 24),
             AppButton(

@@ -1,11 +1,14 @@
 import 'dart:convert';
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:frontend/app/rotas.dart';
 import 'package:frontend/core/api/api_client.dart';
 import 'package:frontend/core/storage/session_storage.dart';
 import 'package:frontend/features/auth/auth_repository.dart';
+import 'package:frontend/features/auth/dados_cadastro.dart';
+import 'package:frontend/features/auth/widgets/campo_codigo.dart';
 import 'package:frontend/features/auth/sessao_controller.dart';
 import 'package:frontend/features/auth/usuario.dart';
 import 'package:frontend/features/doses/dose.dart';
@@ -43,8 +46,12 @@ class AuthFake extends AuthRepository {
   final ApiException? erroVerificar;
 
   int chamadasLogin = 0;
-  bool chamouUsuario = false;
-  bool chamouProfissional = false;
+
+  /// E-mails para os quais o código de cadastro foi pedido.
+  final codigosCadastro = <String>[];
+  ApiException? erroCodigoCadastro;
+  ApiException? erroCadastrar;
+  ({Map<String, dynamic> json, bool profissional})? cadastro;
   int codigosSolicitados = 0;
   String? codigoVerificado;
   Map<String, String>? redefinicao;
@@ -59,24 +66,19 @@ class AuthFake extends AuthRepository {
   }
 
   @override
-  Future<void> cadastrarUsuario({
-    required String nome,
-    required String email,
-    required String senha,
-  }) async {
-    chamouUsuario = true;
+  Future<void> solicitarCodigoCadastro(String email) async {
+    codigosCadastro.add(email);
+    final falha = erroCodigoCadastro;
+    if (falha != null) {
+      erroCodigoCadastro = null;
+      throw falha;
+    }
   }
 
   @override
-  Future<void> cadastrarProfissional({
-    required String nome,
-    required String email,
-    required String senha,
-    required String profissao,
-    required String registro,
-    required String ufRegistro,
-  }) async {
-    chamouProfissional = true;
+  Future<void> cadastrar(DadosCadastro dados, String codigo) async {
+    if (erroCadastrar != null) throw erroCadastrar!;
+    cadastro = (json: dados.toJson(codigo), profissional: dados.profissional != null);
   }
 
   @override
@@ -309,6 +311,16 @@ Future<SessaoController> abrirApp(
   await tester.pumpAndSettle();
   return sessao;
 }
+
+/// Digita no campo de código de 6 casinhas (o campo invisível por trás).
+Future<void> digitarCodigo(WidgetTester tester, String codigo) => tester
+    .enterText(
+      find.descendant(
+        of: find.byType(CampoCodigo),
+        matching: find.byType(EditableText),
+      ),
+      codigo,
+    );
 
 Future<void> tocar(WidgetTester tester, String texto) async {
   final alvo = find.text(texto);

@@ -2,6 +2,7 @@ abstract final class Rotas {
   static const splash = '/splash';
   static const login = '/login';
   static const cadastro = '/cadastro';
+  static const confirmarCadastro = '/cadastro/confirmar';
   static const recuperarSenha = '/recuperar-senha';
   static const verificarCodigo = '/recuperar-senha/codigo';
   static const novaSenha = '/recuperar-senha/nova-senha';
