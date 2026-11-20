@@ -366,15 +366,18 @@ def gerar_doses(frequencia, a_partir_de=None):
     dias_semana = frequencia["dias_semana"]
     intervalo_valor = frequencia["intervalo_valor"]
 
-    # Para tratamentos sem data de fim, não criamos doses indefinidamente. A cada
-    # reposição mantemos doses para os próximos 30 dias.
+    # Nunca criamos automaticamente uma dose em horário já passado: no cadastro,
+    # na edição e na reposição a geração começa no próximo horário disponível.
+    # Isso evita registrar como pendente uma dose que o usuário pode já ter
+    # tomado antes de usar o aplicativo. Para tratamentos sem data de fim, a
+    # reposição mantém uma janela móvel dos próximos 30 dias.
+    agora = datetime.now(FUSO_HORARIO).replace(tzinfo=None)
+    inicio = max(ancora_em, a_partir_de or agora)
+
     if duracao_dias is None:
-        agora = datetime.now(FUSO_HORARIO).replace(tzinfo=None)
-        inicio = max(ancora_em, a_partir_de or agora)
         fim = max(ancora_em, agora) + timedelta(days=JANELA_DOSES_CONTINUAS_DIAS)
         ultimo_dia_exclusivo = fim.date()
     else:
-        inicio = max(ancora_em, a_partir_de or ancora_em)
         fim = ancora_em + timedelta(days=duracao_dias)
         ultimo_dia_exclusivo = ancora_em.date() + timedelta(days=duracao_dias)
 

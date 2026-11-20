@@ -72,12 +72,15 @@ def email_valido(email):
     if not isinstance(email, str) or len(email) > 150:
         return False
 
-    return re.fullmatch(
-        r"[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+"
-        r"@[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?"
-        r"(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+",
-        email,
-    ) is not None
+    return (
+        re.fullmatch(
+            r"[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+"
+            r"@[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?"
+            r"(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+",
+            email,
+        )
+        is not None
+    )
 
 
 def erro_chave_duplicada(erro):
@@ -190,15 +193,219 @@ def resposta_recuperacao_indisponivel():
     return jsonify({"erro": "Não foi possível processar a recuperação de senha!"}), 500
 
 
+def template_email_codigo(titulo, descricao, codigo, previa):
+    titulo = escape(titulo)
+    descricao = escape(descricao)
+    codigo = escape(str(codigo))
+    previa = escape(previa)
+
+    logo_url = escape(os.getenv("MAIL_LOGO_URL", ""), quote=True)
+
+    return f"""
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport"
+              content="width=device-width, initial-scale=1">
+    </head>
+
+    <body style="
+        margin:0;
+        padding:32px 12px;
+        background-color:#F7FAFA;
+        font-family:'Poppins',Arial,Helvetica,sans-serif;
+        color:#163A43;
+    ">
+        <div style="
+            display:none !important;
+            visibility:hidden;
+            opacity:0;
+            color:transparent;
+            height:0;
+            width:0;
+            max-height:0;
+            max-width:0;
+            overflow:hidden;
+            mso-hide:all;
+        ">
+            {previa}
+            {"&#847;&zwnj;" * 100}
+        </div>    
+    
+        <table role="presentation"
+               align="center"
+               cellpadding="0"
+               cellspacing="0"
+               width="100%"
+               style="
+                   max-width:520px;
+                   background:#FFFFFF;
+                   border-radius:16px;
+                   overflow:hidden;
+               ">
+
+            
+            <tr>
+                <td align="center"
+                    style="
+                        background-color:#FFFFFF;
+                        padding:28px 24px 24px;
+                        border-bottom:1px solid #E5EEEE;
+                    ">
+
+                    <img
+                        src="{logo_url}"
+                        alt="MedTrack"
+                        width="260"
+                        style="
+                            display:block;
+                            width:260px;
+                            max-width:100%;
+                            height:auto;
+                            margin:0 auto;
+                            border:0;
+                        "
+                    >
+
+                </td>
+            </tr>
+
+
+            <tr>
+                <td style="padding:36px 30px;">
+
+                    <h2 style="
+                        margin:0 0 16px;
+                        font-size:24px;
+                        color:#163A43;
+                    ">
+                        {titulo}
+                    </h2>
+
+                    <p style="
+                        margin:0 0 26px;
+                        font-size:15px;
+                        line-height:24px;
+                        color:#506974;
+                    ">
+                        {descricao}
+                    </p>
+
+                    <table role="presentation"
+                           width="100%"
+                           cellpadding="0"
+                           cellspacing="0"
+                           style="
+                               background:#DDF7F6;
+                               border-radius:12px;
+                           ">
+                        <tr>
+                            <td align="center"
+                                style="padding:28px 12px;">
+
+                                <p style="
+                                    margin:0 0 12px;
+                                    font-size:11px;
+                                    font-weight:bold;
+                                    letter-spacing:1px;
+                                    color:#167C80;
+                                ">
+                                    SEU CÓDIGO DE VERIFICAÇÃO
+                                </p>
+
+                                <p style="
+                                    margin:0;
+                                    font-size:36px;
+                                    font-weight:bold;
+                                    letter-spacing:7px;
+                                    color:#163A43;
+                                ">
+                                    {codigo}
+                                </p>
+
+                                <p style="
+                                    margin:14px 0 0;
+                                    font-size:12px;
+                                    color:#506974;
+                                ">
+                                    Válido por 10 minutos
+                                </p>
+
+                            </td>
+                        </tr>
+                    </table>
+
+                    <p style="
+                        margin:26px 0;
+                        font-size:14px;
+                        line-height:23px;
+                        color:#506974;
+                    ">
+                        Digite este código na tela de
+                        verificação do aplicativo MedTrack.
+                    </p>
+
+                    <hr style="
+                        border:0;
+                        border-top:1px solid #DCE7E8;
+                    ">
+
+                    <p style="
+                        margin:20px 0 0;
+                        font-size:12px;
+                        line-height:20px;
+                        color:#68777A;
+                    ">
+                        Se você não solicitou este código,
+                        ignore esta mensagem.
+                        Nunca compartilhe seu código com outras pessoas.
+                    </p>
+
+                </td>
+            </tr>
+
+        </table>
+
+        <p style="
+            margin:24px auto 0;
+            text-align:center;
+            font-size:12px;
+            color:#68777A;
+        ">
+            MedTrack · Seu tratamento em dia
+        </p>
+
+    </body>
+    </html>
+    """
+
+
 def criar_mensagem_recuperacao(email, codigo):
     mensagem = Message(
         subject="Código para redefinir sua senha - MedTrack",
-        sender=("MedTrack", os.getenv("MAIL_DEFAULT_SENDER", "help.medtrack@gmail.com")),
+        sender=(
+            "MedTrack",
+            os.getenv("MAIL_DEFAULT_SENDER", "help.medtrack@gmail.com"),
+        ),
         recipients=[email],
     )
     mensagem.body = (
         f"Seu código para redefinir a senha é: {codigo}.\n\n"
         "Ele é válido por 10 minutos."
+    )
+    mensagem.html = template_email_codigo(
+        titulo="Recuperação de senha",
+        descricao=(
+            "Recebemos uma solicitação para redefinir "
+            "a senha da sua conta MedTrack. "
+            "Utilize o código abaixo para continuar."
+        ),
+        codigo=codigo,
+        previa=(
+            "Seu código para redefinir a senha está disponível. "
+            "Abra o e-mail para visualizar."
+        ),
     )
     return mensagem
 
@@ -238,12 +445,28 @@ def agendar_envio_codigo(email, codigo, recuperacao_id):
 def criar_mensagem_confirmacao_cadastro(email, codigo):
     mensagem = Message(
         subject="Confirme seu e-mail - MedTrack",
-        sender=("MedTrack", os.getenv("MAIL_DEFAULT_SENDER", "help.medtrack@gmail.com")),
+        sender=(
+            "MedTrack",
+            os.getenv("MAIL_DEFAULT_SENDER", "help.medtrack@gmail.com"),
+        ),
         recipients=[email],
     )
     mensagem.body = (
         f"Seu código para confirmar o cadastro é: {codigo}.\n\n"
         "Ele é válido por 10 minutos. Não compartilhe este código."
+    )
+    mensagem.html = template_email_codigo(
+        titulo="Confirme seu e-mail",
+        descricao=(
+            "Recebemos uma solicitação de cadastro no MedTrack. "
+            "Utilize o código abaixo para confirmar seu e-mail "
+            "e concluir seu cadastro."
+        ),
+        codigo=codigo,
+        previa=(
+            "Seu código de confirmação do MedTrack chegou. "
+            "Abra o e-mail para visualizar."
+        ),
     )
     return mensagem
 
@@ -300,7 +523,9 @@ def validar_codigo_cadastro(cursor, email, codigo):
         return "Código não encontrado ou expirado!"
 
     if int(time.time()) > int(confirmacao["expira_em"]):
-        cursor.execute("DELETE FROM confirmacoes_cadastro WHERE id = %s", (confirmacao["id"],))
+        cursor.execute(
+            "DELETE FROM confirmacoes_cadastro WHERE id = %s", (confirmacao["id"],)
+        )
         return "Código expirado! Solicite um novo código."
 
     if int(confirmacao["tentativas"]) >= LIMITE_TENTATIVAS_CODIGO:
@@ -313,7 +538,9 @@ def validar_codigo_cadastro(cursor, email, codigo):
             (tentativas, confirmacao["id"]),
         )
         if tentativas >= LIMITE_TENTATIVAS_CODIGO:
-            return "Código bloqueado por excesso de tentativas! Solicite um novo código."
+            return (
+                "Código bloqueado por excesso de tentativas! Solicite um novo código."
+            )
         return "Código inválido!"
 
     return None
@@ -376,7 +603,9 @@ def solicitar_codigo_cadastro():
             codigo = str(secrets.randbelow(900000) + 100000)
             codigo_hash = hash_codigo_cadastro(codigo)
             expira_em = int(time.time()) + TEMPO_EXPIRACAO_CODIGO
-            cursor.execute("DELETE FROM confirmacoes_cadastro WHERE email = %s", (email,))
+            cursor.execute(
+                "DELETE FROM confirmacoes_cadastro WHERE email = %s", (email,)
+            )
             cursor.execute(
                 """
                 INSERT INTO confirmacoes_cadastro (email, codigo, expira_em, tentativas)
@@ -386,7 +615,9 @@ def solicitar_codigo_cadastro():
             )
     except Exception:
         logger.exception("Erro ao criar código de confirmação de cadastro")
-        return jsonify({"erro": "Não foi possível enviar o código de confirmação!"}), 500
+        return jsonify(
+            {"erro": "Não foi possível enviar o código de confirmação!"}
+        ), 500
 
     try:
         agendar_confirmacao_cadastro(email, codigo, codigo_hash)
@@ -395,10 +626,16 @@ def solicitar_codigo_cadastro():
         try:
             invalidar_confirmacao_cadastro(email, codigo_hash)
         except Exception:
-            logger.exception("Não foi possível invalidar código de cadastro não agendado")
-        return jsonify({"erro": "Não foi possível enviar o código de confirmação!"}), 500
+            logger.exception(
+                "Não foi possível invalidar código de cadastro não agendado"
+            )
+        return jsonify(
+            {"erro": "Não foi possível enviar o código de confirmação!"}
+        ), 500
 
-    return jsonify({"mensagem": "Código de confirmação enviado para o e-mail informado."}), 202
+    return jsonify(
+        {"mensagem": "Código de confirmação enviado para o e-mail informado."}
+    ), 202
 
 
 @usuario.route("/cadastrar-usuario", methods=["POST"])
@@ -420,7 +657,9 @@ def cadastrar_usuario():
     if len(senha) < 8:
         return jsonify({"erro": "Senha deve ter pelo menos 8 caracteres!"}), 400
     if not codigo:
-        return jsonify({"erro": "Código de confirmação de seis dígitos é obrigatório!"}), 400
+        return jsonify(
+            {"erro": "Código de confirmação de seis dígitos é obrigatório!"}
+        ), 400
 
     senha_hash = bcrypt.hashpw(senha.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
@@ -433,7 +672,9 @@ def cadastrar_usuario():
                 "INSERT INTO usuarios (nome, email, senha_hash) VALUES (%s, %s, %s)",
                 (nome, email, senha_hash),
             )
-            cursor.execute("DELETE FROM confirmacoes_cadastro WHERE email = %s", (email,))
+            cursor.execute(
+                "DELETE FROM confirmacoes_cadastro WHERE email = %s", (email,)
+            )
     except Exception as erro:
         if erro_chave_duplicada(erro):
             return jsonify({"erro": "E-mail já cadastrado!"}), 409
@@ -471,7 +712,9 @@ def cadastrar_profissional():
     if not uf_registro:
         return jsonify({"erro": "UF do registro é obrigatória!"}), 400
     if not codigo:
-        return jsonify({"erro": "Código de confirmação de seis dígitos é obrigatório!"}), 400
+        return jsonify(
+            {"erro": "Código de confirmação de seis dígitos é obrigatório!"}
+        ), 400
 
     senha_hash = bcrypt.hashpw(senha.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
@@ -492,7 +735,9 @@ def cadastrar_profissional():
                 """,
                 (usuario_id, profissao, registro, uf_registro),
             )
-            cursor.execute("DELETE FROM confirmacoes_cadastro WHERE email = %s", (email,))
+            cursor.execute(
+                "DELETE FROM confirmacoes_cadastro WHERE email = %s", (email,)
+            )
     except Exception as erro:
         if erro_chave_duplicada(erro):
             return jsonify({"erro": "E-mail ou registro já cadastrado!"}), 409
