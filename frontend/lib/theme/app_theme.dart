@@ -25,5 +25,17 @@ class AppTheme {
     useMaterial3: true,
     scaffoldBackgroundColor: AppColors.background,
     fontFamily: 'Poppins',
+    // Sem isso, o que não tem cor própria (janelas, calendário, relógio,
+    // carregando) usa o roxo padrão do Flutter.
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: AppColors.ciano,
+      primary: AppColors.darkCiano,
+      error: AppColors.error,
+      surface: AppColors.surface,
+    ),
+    dialogTheme: const DialogThemeData(
+      backgroundColor: AppColors.surface,
+      surfaceTintColor: Colors.transparent,
+    ),
   );
 }
