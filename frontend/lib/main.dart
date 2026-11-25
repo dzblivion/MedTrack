@@ -15,6 +15,10 @@ import 'features/doses/dose_repository.dart';
 import 'features/mia/anuncio_premiado.dart';
 import 'features/mia/digitalizar_prescricao_screen.dart';
 import 'features/mia/mia_repository.dart';
+import 'features/perfil/ajustar_foto_screen.dart';
+import 'features/perfil/escolher_foto.dart';
+import 'features/perfil/foto_perfil_controller.dart';
+import 'features/perfil/foto_perfil_repository.dart';
 import 'features/tratamentos/tratamento_repository.dart';
 import 'theme/app_theme.dart';
 
@@ -49,6 +53,9 @@ class MedTrackApp extends StatefulWidget {
   final MiaRepository? mia;
   final AnuncioPremiado? anuncio;
   final EscolherArquivo? escolherArquivo;
+  final FotoPerfilRepository? fotoPerfil;
+  final EscolherFoto? escolherFoto;
+  final AjustarFoto? ajustarFoto;
   final String rotaInicial;
 
   const MedTrackApp({
@@ -61,6 +68,9 @@ class MedTrackApp extends StatefulWidget {
     this.mia,
     this.anuncio,
     this.escolherArquivo,
+    this.fotoPerfil,
+    this.escolherFoto,
+    this.ajustarFoto,
     this.rotaInicial = Rotas.splash,
   });
 
@@ -77,11 +87,16 @@ class _MedTrackAppState extends State<MedTrackApp> {
   late final _mia = widget.mia ?? MiaRepository(widget.api);
   late final AnuncioPremiado _anuncio =
       widget.anuncio ?? const AnuncioSimulado();
+  late final _fotoPerfil = FotoPerfilController(
+    widget.fotoPerfil ?? FotoPerfilRepository(widget.api),
+    widget.sessao,
+  );
 
   @override
   void dispose() {
     _router.dispose();
     _mudancas.dispose();
+    _fotoPerfil.dispose();
     super.dispose();
   }
 
@@ -98,6 +113,13 @@ class _MedTrackAppState extends State<MedTrackApp> {
         Provider<EscolherArquivo>.value(
           value: widget.escolherArquivo ?? escolherArquivoDoAparelho,
         ),
+        Provider<EscolherFoto>.value(
+          value: widget.escolherFoto ?? escolherFotoDoAparelho,
+        ),
+        Provider<AjustarFoto>.value(
+          value: widget.ajustarFoto ?? ajustarFotoNaTela,
+        ),
+        ChangeNotifierProvider.value(value: _fotoPerfil),
         // As telas só leem (read) e escutam por conta própria, então o
         // aviso não redesenha o app inteiro.
         ChangeNotifierProvider.value(value: _mudancas),

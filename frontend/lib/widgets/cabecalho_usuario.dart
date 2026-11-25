@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import 'avatar_usuario.dart';
 
 /// Avatar com a inicial + nome, no topo das abas do app (como no Figma).
 class CabecalhoUsuario extends StatelessWidget {
@@ -7,41 +8,22 @@ class CabecalhoUsuario extends StatelessWidget {
   final String? subtitulo;
   final Widget? acao;
 
+  /// No Perfil: tocar no avatar troca a foto.
+  final VoidCallback? onTocarAvatar;
+
   const CabecalhoUsuario({
     super.key,
     required this.nome,
     this.subtitulo,
     this.acao,
+    this.onTocarAvatar,
   });
 
   @override
   Widget build(BuildContext context) {
-    final inicial = nome.isEmpty ? '?' : nome[0].toUpperCase();
-
     return Row(
       children: [
-        Container(
-          width: 48,
-          height: 48,
-          alignment: Alignment.center,
-          decoration: const BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [AppColors.ciano, Color.fromARGB(255, 25, 136, 139)],
-            ),
-          ),
-          child: Text(
-            inicial,
-            style: TextStyle(
-              fontFamily: 'Poppins',
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
+        AvatarUsuario(nome: nome, onTap: onTocarAvatar),
         const SizedBox(width: 12),
         Expanded(
           child: Column(

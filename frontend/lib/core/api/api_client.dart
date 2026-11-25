@@ -58,13 +58,25 @@ class ApiClient {
     required String campo,
     required List<int> bytes,
     required String nomeArquivo,
+    String metodo = 'POST',
     Duration espera = const Duration(seconds: 60),
   }) {
-    final requisicao = http.MultipartRequest('POST', Uri.parse('$baseUrl$path'))
+    final requisicao = http.MultipartRequest(metodo, Uri.parse('$baseUrl$path'))
       ..files.add(
         http.MultipartFile.fromBytes(campo, bytes, filename: nomeArquivo),
       );
     return _executar(requisicao, espera);
+  }
+
+  /// Baixa um arquivo (ex.: a foto de perfil). Nulo se não existir (404).
+  Future<Uint8List?> baixar(String path) async {
+    final resposta = await _responder(
+      http.Request('GET', Uri.parse('$baseUrl$path')),
+      const Duration(seconds: 15),
+    );
+    if (resposta.statusCode == 404) return null;
+    _confirmarSucesso(resposta);
+    return resposta.bodyBytes;
   }
 
   Future<Map<String, dynamic>> _enviar(
@@ -81,9 +93,19 @@ class ApiClient {
     return _executar(requisicao, const Duration(seconds: 10));
   }
 
-  /// Envia com o token, trata o tempo de espera e transforma as respostas
-  /// de erro em [ApiException] com a mensagem do backend.
+  /// Envia e devolve o JSON da resposta; erros viram [ApiException] com a
+  /// mensagem do backend.
   Future<Map<String, dynamic>> _executar(
+    http.BaseRequest requisicao,
+    Duration espera,
+  ) async {
+    final resposta = await _responder(requisicao, espera);
+    _confirmarSucesso(resposta);
+    return _decodificar(resposta.body);
+  }
+
+  /// Envia com o token e trata o tempo de espera e a falta de conexão.
+  Future<http.Response> _responder(
     http.BaseRequest requisicao,
     Duration espera,
   ) async {
@@ -96,27 +118,25 @@ class ApiClient {
       final resposta = await http.Response.fromStream(
         await _http.send(requisicao).timeout(espera),
       );
-      final dados = _decodificar(resposta.body);
-
-      if (resposta.statusCode >= 200 && resposta.statusCode < 300) {
-        return dados;
-      }
-
       if (resposta.statusCode == 401 && tokenEnviado != null) {
         aoRecusarToken?.call();
         throw const ApiException('Sua sessão expirou. Entre novamente.', 401);
       }
-
-      throw ApiException(
-        dados['erro'] as String? ??
-            'Erro inesperado no servidor (${resposta.statusCode}).',
-        resposta.statusCode,
-      );
+      return resposta;
     } on TimeoutException {
       throw const ApiException('O servidor demorou para responder.');
     } on http.ClientException {
       throw const ApiException('Não foi possível conectar ao servidor.');
     }
+  }
+
+  void _confirmarSucesso(http.Response resposta) {
+    if (resposta.statusCode >= 200 && resposta.statusCode < 300) return;
+    throw ApiException(
+      _decodificar(resposta.body)['erro'] as String? ??
+          'Erro inesperado no servidor (${resposta.statusCode}).',
+      resposta.statusCode,
+    );
   }
 
   Map<String, dynamic> _decodificar(String corpo) {

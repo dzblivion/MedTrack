@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -17,6 +18,9 @@ import 'package:frontend/features/mia/anuncio_premiado.dart';
 import 'package:frontend/features/mia/digitalizar_prescricao_screen.dart';
 import 'package:frontend/features/mia/medicamento_lido.dart';
 import 'package:frontend/features/mia/mia_repository.dart';
+import 'package:frontend/features/perfil/ajustar_foto_screen.dart';
+import 'package:frontend/features/perfil/escolher_foto.dart';
+import 'package:frontend/features/perfil/foto_perfil_repository.dart';
 import 'package:frontend/features/tratamentos/dados_tratamento.dart';
 import 'package:frontend/features/tratamentos/frequencia.dart';
 import 'package:frontend/features/tratamentos/tratamento.dart';
@@ -315,6 +319,38 @@ class AnuncioFake implements AnuncioPremiado {
   }
 }
 
+/// Foto de perfil falsa: guarda a foto em memória.
+class FotoPerfilFake extends FotoPerfilRepository {
+  Uint8List? foto;
+  ApiException? erroEnviar;
+  final enviadas = <String>[];
+  int remocoes = 0;
+
+  FotoPerfilFake([this.foto]) : super(ApiClient());
+
+  @override
+  Future<Uint8List?> buscar() async => foto;
+
+  @override
+  Future<void> enviar({required List<int> bytes, required String nome}) async {
+    if (erroEnviar != null) throw erroEnviar!;
+    enviadas.add(nome);
+    foto = Uint8List.fromList(bytes);
+  }
+
+  @override
+  Future<void> remover() async {
+    remocoes++;
+    foto = null;
+  }
+}
+
+/// PNG de 1x1 pixel, para fotos de teste que a tela consegue mostrar.
+final pngDeTeste = base64Decode(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8'
+  'AAAAASUVORK5CYII=',
+);
+
 /// Tratamento de exemplo que começou há [diasAtras] dias.
 Tratamento tratamentoExemplo({
   int id = 1,
@@ -367,6 +403,9 @@ Future<SessaoController> abrirApp(
   MiaRepository? mia,
   AnuncioPremiado? anuncio,
   EscolherArquivo? escolherArquivo,
+  FotoPerfilRepository? fotoPerfil,
+  EscolherFoto? escolherFoto,
+  AjustarFoto? ajustarFoto,
   String rota = Rotas.splash,
 }) async {
   final apiUsada = api ?? ApiClient();
@@ -388,6 +427,10 @@ Future<SessaoController> abrirApp(
       mia: mia ?? MiaFake(),
       anuncio: anuncio ?? AnuncioFake(),
       escolherArquivo: escolherArquivo ?? () async => null,
+      fotoPerfil: fotoPerfil ?? FotoPerfilFake(),
+      escolherFoto: escolherFoto ?? ({required camera}) async => null,
+      // Por padrão, "ajustar" devolve a foto como veio (sem abrir a tela).
+      ajustarFoto: ajustarFoto ?? (context, foto) async => foto,
       rotaInicial: rota,
     ),
   );

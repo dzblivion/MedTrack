@@ -3,15 +3,85 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../app/rotas.dart';
+import '../../core/api/api_client.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_snackbar.dart';
 import '../../widgets/cabecalho_usuario.dart';
 import '../auth/sessao_controller.dart';
+import 'ajustar_foto_screen.dart';
+import 'escolher_foto.dart';
+import 'foto_perfil_controller.dart';
+
+enum _OpcaoFoto { camera, galeria, remover }
 
 class PerfilScreen extends StatelessWidget {
   const PerfilScreen({super.key});
 
   void _emBreve(BuildContext context) => AppSnackBar.info(context, 'Em breve.');
+
+  /// Menu da foto: tirar, escolher da galeria ou remover.
+  Future<void> _trocarFoto(BuildContext context) async {
+    final fotos = context.read<FotoPerfilController>();
+    final escolher = context.read<EscolherFoto>();
+    final ajustar = context.read<AjustarFoto>();
+
+    final opcao = await showModalBottomSheet<_OpcaoFoto>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      showDragHandle: true,
+      builder: (contexto) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_camera_outlined),
+              title: const Text('Tirar foto'),
+              onTap: () => Navigator.of(contexto).pop(_OpcaoFoto.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Escolher da galeria'),
+              onTap: () => Navigator.of(contexto).pop(_OpcaoFoto.galeria),
+            ),
+            if (fotos.temFoto)
+              ListTile(
+                leading: const Icon(Icons.delete_outline, color: AppColors.error),
+                title: const Text(
+                  'Remover foto',
+                  style: TextStyle(color: AppColors.error),
+                ),
+                onTap: () => Navigator.of(contexto).pop(_OpcaoFoto.remover),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (opcao == null || !context.mounted) return;
+
+    try {
+      if (opcao == _OpcaoFoto.remover) {
+        await fotos.remover();
+        if (context.mounted) AppSnackBar.info(context, 'Foto removida.');
+        return;
+      }
+      final foto = await escolher(camera: opcao == _OpcaoFoto.camera);
+      if (foto == null || !context.mounted) return;
+      // A pessoa encaixa o rosto no círculo; só o recorte é enviado.
+      final recortada = await ajustar(context, foto.bytes);
+      if (recortada == null) return;
+      await fotos.trocar(bytes: recortada, nome: 'foto.png');
+      if (context.mounted) {
+        AppSnackBar.info(context, 'Foto de perfil atualizada!');
+      }
+    } on ApiException catch (e) {
+      // Ex.: "Aguarde antes de trocar a foto novamente." (60 s entre trocas)
+      if (context.mounted) AppSnackBar.erro(context, e.mensagem);
+    } catch (_) {
+      if (context.mounted) {
+        AppSnackBar.erro(context, 'Não foi possível trocar a foto.');
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,6 +99,7 @@ class PerfilScreen extends StatelessWidget {
             CabecalhoUsuario(
               nome: nome,
               subtitulo: email,
+              onTocarAvatar: () => _trocarFoto(context),
               acao: FilledButton(
                 onPressed: () => _emBreve(context),
                 style: FilledButton.styleFrom(
