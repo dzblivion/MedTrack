@@ -32,6 +32,10 @@ class DoseRepository {
     return doses..sort((a, b) => b.agendadaPara.compareTo(a.agendadaPara));
   }
 
+  /// Todas as doses de um tratamento (para a contagem no detalhe).
+  Future<List<Dose>> doTratamento(Tratamento tratamento) =>
+      _dosesDe(tratamento);
+
   Future<List<Dose>> _dosesDos(bool Function(Tratamento) incluir) async {
     final tratamentos = (await _tratamentos.listar()).where(incluir);
     final porTratamento = await Future.wait(tratamentos.map(_dosesDe));

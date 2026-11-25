@@ -205,6 +205,19 @@ class DoseFake extends DoseRepository {
     return doses;
   }
 
+  /// Falha a próxima busca das doses de um tratamento (detalhe).
+  ApiException? erroDoTratamento;
+
+  @override
+  Future<List<Dose>> doTratamento(Tratamento tratamento) async {
+    final falha = erroDoTratamento;
+    if (falha != null) {
+      erroDoTratamento = null;
+      throw falha;
+    }
+    return [for (final d in doses) if (d.tratamentoId == tratamento.id) d];
+  }
+
   /// O histórico usa a mesma lista, da mais recente para a mais antiga.
   @override
   Future<List<Dose>> todas() async {
@@ -222,6 +235,7 @@ class DoseFake extends DoseRepository {
             ? d
             : doseExemplo(
                 id: d.id,
+                tratamentoId: d.tratamentoId,
                 medicamento: d.medicamento,
                 em: d.agendadaPara,
                 status: tomada ? StatusDose.tomada : StatusDose.naoTomada,
@@ -232,13 +246,14 @@ class DoseFake extends DoseRepository {
 
 Dose doseExemplo({
   int id = 1,
+  int tratamentoId = 1,
   String medicamento = 'Amoxicilina',
   required DateTime em,
   StatusDose status = StatusDose.pendente,
 }) =>
     Dose(
       id: id,
-      tratamentoId: 1,
+      tratamentoId: tratamentoId,
       medicamento: medicamento,
       detalhe: '500 mg · 1 por dose',
       agendadaPara: em,
@@ -332,6 +347,8 @@ Future<void> digitarCodigo(WidgetTester tester, String codigo) => tester
 Future<void> tocar(WidgetTester tester, String texto) async {
   final alvo = find.text(texto);
   await tester.ensureVisible(alvo);
+  // Redesenha na posição rolada antes de tocar.
+  await tester.pump();
   await tester.tap(alvo);
   await tester.pumpAndSettle();
 }

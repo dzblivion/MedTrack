@@ -26,6 +26,11 @@ class HistoricoController extends ChangeNotifier {
   /// Primeiro dia do mês escolhido no filtro.
   late DateTime _mes = _inicioDoMes(agora);
 
+  /// Mostrando só um tratamento (vindo do "Ver no histórico" do detalhe).
+  int? _tratamentoId;
+  bool _carregou = false;
+  bool _irParaUltimaAoCarregar = false;
+
   HistoricoController(this._repositorio, {DateTime Function()? relogio})
       : _relogio = relogio ?? DateTime.now;
 
@@ -38,10 +43,43 @@ class HistoricoController extends ChangeNotifier {
   /// Já pediu os dados alguma vez (a tela usa para buscar na 1ª abertura).
   bool get iniciado => _iniciado;
 
+  int? get tratamentoFiltrado => _tratamentoId;
+
+  /// Nome do remédio filtrado, para a etiqueta "Losartana ✕".
+  String? get nomeDoFiltro => _visiveis.firstOrNull?.medicamento;
+
+  /// As doses consideradas: todas, ou só as do tratamento filtrado.
+  Iterable<Dose> get _visiveis {
+    final id = _tratamentoId;
+    return id == null ? _doses : _doses.where((d) => d.tratamentoId == id);
+  }
+
+  /// Filtra por um tratamento (ou tira o filtro, com nulo). Ao filtrar,
+  /// abre no mês da dose mais recente dele (ex.: um tratamento que
+  /// acabou mês passado); ao tirar, volta para o mês atual.
+  void filtrar(int? tratamentoId) {
+    if (tratamentoId == _tratamentoId) return;
+    _tratamentoId = tratamentoId;
+    if (tratamentoId == null) {
+      _mes = _inicioDoMes(agora);
+    } else if (_carregou) {
+      _irParaUltimaDose();
+    } else {
+      _irParaUltimaAoCarregar = true;
+    }
+    _avisar();
+  }
+
+  void _irParaUltimaDose() {
+    final maisRecente = _visiveis.firstOrNull;
+    _mes = _inicioDoMes(maisRecente?.agendadaPara ?? agora);
+  }
+
   /// Não há histórico antes da primeira dose nem depois do mês atual.
   bool get podeVoltar {
-    if (_doses.isEmpty) return false;
-    return _mes.isAfter(_inicioDoMes(_doses.last.agendadaPara));
+    final maisAntiga = _visiveis.lastOrNull;
+    if (maisAntiga == null) return false;
+    return _mes.isAfter(_inicioDoMes(maisAntiga.agendadaPara));
   }
 
   bool get podeAvancar => _mes.isBefore(_inicioDoMes(agora));
@@ -61,7 +99,7 @@ class HistoricoController extends ChangeNotifier {
   /// Dias do mês escolhido que têm doses, do mais recente ao mais antigo.
   List<DiaDoHistorico> get dias {
     final porDia = <DateTime, List<Dose>>{};
-    for (final dose in _doses) {
+    for (final dose in _visiveis) {
       final quando = dose.agendadaPara;
       if (quando.year != _mes.year || quando.month != _mes.month) continue;
       porDia
@@ -110,7 +148,14 @@ class HistoricoController extends ChangeNotifier {
     }
 
     if (busca != _buscas) return;
-    if (doses != null) _doses = doses;
+    if (doses != null) {
+      _doses = doses;
+      _carregou = true;
+      if (_irParaUltimaAoCarregar) {
+        _irParaUltimaAoCarregar = false;
+        _irParaUltimaDose();
+      }
+    }
     _erro = erro;
     _carregando = false;
     _avisar();

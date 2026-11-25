@@ -14,6 +14,7 @@ import '../features/doses/dose_repository.dart';
 import '../features/home/home_controller.dart';
 import '../features/historico/historico_controller.dart';
 import '../features/historico/historico_screen.dart';
+import '../features/historico/historico_tratamento_screen.dart';
 import '../features/home/home_screen.dart';
 import '../features/perfil/perfil_screen.dart';
 import '../features/perfil/texto_legal_screen.dart';
@@ -161,6 +162,23 @@ GoRouter criarRouter(
                         state.extra is Tratamento ? null : Rotas.tratamentos,
                     builder: (context, state) => TratamentoFormScreen(
                       original: state.extra as Tratamento,
+                    ),
+                  ),
+                  // Histórico só deste tratamento, por cima do detalhe.
+                  GoRoute(
+                    path: ':id/historico',
+                    parentNavigatorKey: raiz,
+                    redirect: (context, state) =>
+                        _idDaRota(state) == null ? Rotas.tratamentos : null,
+                    builder: (context, state) => ChangeNotifierProvider(
+                      create: (context) =>
+                          HistoricoController(context.read<DoseRepository>())
+                            ..filtrar(_idDaRota(state))
+                            ..carregar(),
+                      child: HistoricoTratamentoScreen(
+                        medicamento:
+                            state.extra is String ? state.extra as String : null,
+                      ),
                     ),
                   ),
                   GoRoute(

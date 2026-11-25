@@ -7,9 +7,12 @@ import '../../core/api/api_client.dart';
 import '../../core/formatos.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_snackbar.dart';
+import '../doses/dose_repository.dart';
+import '../doses/resumo_doses.dart';
 import 'tratamento.dart';
 import 'tratamento_repository.dart';
 import 'widgets/acoes_tratamento.dart';
+import 'widgets/card_doses_tratamento.dart';
 
 /// Ao sair, devolve `true` se algo mudou, para a lista recarregar.
 class TratamentoDetalheScreen extends StatefulWidget {
@@ -24,6 +27,8 @@ class TratamentoDetalheScreen extends StatefulWidget {
 
 class _TratamentoDetalheScreenState extends State<TratamentoDetalheScreen> {
   Tratamento? _tratamento;
+  ResumoDoses? _resumo;
+  bool _falhaDoses = false;
   String? _erro;
   bool _ocupado = false;
   bool _mudou = false;
@@ -40,12 +45,39 @@ class _TratamentoDetalheScreenState extends State<TratamentoDetalheScreen> {
     setState(() => _erro = null);
     try {
       final tratamento = await _repositorio.buscar(widget.id);
-      if (mounted) setState(() => _tratamento = tratamento);
+      if (!mounted) return;
+      setState(() => _tratamento = tratamento);
+      await _carregarDoses(tratamento);
     } on ApiException catch (e) {
       if (mounted) setState(() => _erro = e.mensagem);
     } catch (_) {
       if (mounted) setState(() => _erro = 'Não foi possível carregar.');
     }
+  }
+
+  /// Separado do tratamento: se as doses falharem, o detalhe continua.
+  Future<void> _carregarDoses(Tratamento tratamento) async {
+    setState(() => _falhaDoses = false);
+    try {
+      final doses = await context.read<DoseRepository>().doTratamento(
+        tratamento,
+      );
+      if (mounted) {
+        setState(() => _resumo = ResumoDoses.de(doses, DateTime.now()));
+      }
+    } catch (_) {
+      if (mounted) setState(() => _falhaDoses = true);
+    }
+  }
+
+  /// Abre o histórico do tratamento por cima; se uma dose foi registrada
+  /// lá, atualiza a contagem ao voltar.
+  Future<void> _verHistorico(Tratamento t) async {
+    final registrou = await context.push<bool>(
+      Rotas.historicoDoTratamento(t.id),
+      extra: t.medicamento,
+    );
+    if (registrou == true && mounted) await _carregarDoses(t);
   }
 
   Future<void> _executar(Future<void> Function() acao, String sucesso) async {
@@ -202,6 +234,14 @@ class _TratamentoDetalheScreenState extends State<TratamentoDetalheScreen> {
             ('Período', periodo),
             ('Duração', progresso),
           ],
+        ),
+        const SizedBox(height: 16),
+        CardDosesTratamento(
+          resumo: _resumo,
+          usoContinuo: t.usoContinuo,
+          falhou: _falhaDoses,
+          onVerHistorico: () => _verHistorico(t),
+          onTentarDeNovo: () => _carregarDoses(t),
         ),
         const SizedBox(height: 24),
         AcoesTratamento(
