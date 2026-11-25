@@ -30,8 +30,11 @@ class TratamentoRepository {
   Future<Tratamento> buscar(int id) async =>
       Tratamento.fromJson(await _api.get('/tratamentos/$id'));
 
-  Future<void> criar(DadosTratamento dados) =>
-      _api.post('/tratamentos', dados.toJson());
+  /// Devolve o id do tratamento criado.
+  Future<int?> criar(DadosTratamento dados) async {
+    final resposta = await _api.post('/tratamentos', dados.toJson());
+    return resposta['tratamento_id'] as int?;
+  }
 
   Future<void> atualizar(int id, DadosTratamento dados) =>
       _api.put('/tratamentos/$id', dados.toJson());

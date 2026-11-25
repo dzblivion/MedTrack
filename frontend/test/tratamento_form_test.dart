@@ -18,12 +18,14 @@ void main() {
 
   Future<void> abrirFormulario(
     WidgetTester tester,
-    TratamentoFake tratamentos,
-  ) async {
+    TratamentoFake tratamentos, {
+    DoseFake? doses,
+  }) async {
     await abrirApp(
       tester,
       storage: storageComSessao(daquiUmaHora),
       tratamentos: tratamentos,
+      doses: doses,
       rota: Rotas.tratamentos,
     );
     await tocar(tester, 'Novo tratamento');
@@ -223,9 +225,60 @@ void main() {
         'intervalo_valor': null,
       },
     });
-    expect(find.text('Meus tratamentos:'), findsOneWidget);
+    // Janela de confirmação; o botão leva ao Início.
     expect(find.text('Tratamento cadastrado!'), findsOneWidget);
+    expect(
+      find.text('Ele já aparece na sua lista de tratamentos.'),
+      findsOneWidget,
+    );
+    // A lista recarregou sozinha (aviso de mudança).
     expect(tratamentos.buscas, 2);
+
+    await tocar(tester, 'Ir para o Início');
+    expect(find.text('Seu tratamento de hoje:'), findsOneWidget);
+  });
+
+  testWidgets('o aviso de cadastrado diz quando é a primeira dose', (
+    tester,
+  ) async {
+    final amanha = DateTime(hoje.year, hoje.month, hoje.day + 1);
+    final doses = DoseFake()..primeiraDose = amanha;
+    await abrirFormulario(tester, TratamentoFake(), doses: doses);
+
+    await etapaMedicamento(tester);
+    await etapaFrequenciaDiaria(tester);
+    await preencher(tester, 0, '5');
+    await tocar(tester, 'Salvar tratamento');
+
+    // O backend não cria doses em horários que já passaram: a primeira
+    // pode ser só amanhã, e o aviso evita a pessoa achar que não salvou.
+    expect(doses.pediuPrimeiraDe, 99);
+    expect(find.text('Tratamento cadastrado!'), findsOneWidget);
+    expect(
+      find.text(
+        'Primeira dose: amanhã às 00:00.\n'
+        'Ela aparece no Início a partir de amanhã.',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('primeira dose ainda hoje: sem o aviso do Início', (
+    tester,
+  ) async {
+    final maisTarde = DateTime(hoje.year, hoje.month, hoje.day, 23, 59);
+    await abrirFormulario(
+      tester,
+      TratamentoFake(),
+      doses: DoseFake()..primeiraDose = maisTarde,
+    );
+
+    await etapaMedicamento(tester);
+    await etapaFrequenciaDiaria(tester);
+    await preencher(tester, 0, '5');
+    await tocar(tester, 'Salvar tratamento');
+
+    expect(find.text('Primeira dose: hoje às 23:59.'), findsOneWidget);
   });
 
   testWidgets('a cada 8 horas e contínuo: ancora na primeira dose', (

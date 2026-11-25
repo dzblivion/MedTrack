@@ -2,10 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../app/rotas.dart';
 import '../../core/api/api_client.dart';
+import '../../core/formatos.dart';
+import '../../core/mudancas.dart';
+import '../doses/dose_repository.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_button.dart';
 import '../../widgets/app_snackbar.dart';
+import '../mia/medicamento_lido.dart';
+import 'form/aviso_mia.dart';
 import 'form/cabecalho_etapa.dart';
 import 'form/etapa_duracao.dart';
 import 'form/etapa_frequencia.dart';
@@ -15,11 +21,13 @@ import 'tratamento.dart';
 import 'tratamento_repository.dart';
 
 /// Cadastra um tratamento novo ou edita [original], em 3 etapas.
-/// Ao salvar, volta com `true`.
+/// Com [sugestao], o cadastro novo vem preenchido pelo que a MIA leu da
+/// receita, para a pessoa revisar. Ao salvar, volta com `true`.
 class TratamentoFormScreen extends StatefulWidget {
   final Tratamento? original;
+  final MedicamentoLido? sugestao;
 
-  const TratamentoFormScreen({super.key, this.original});
+  const TratamentoFormScreen({super.key, this.original, this.sugestao});
 
   @override
   State<TratamentoFormScreen> createState() => _TratamentoFormScreenState();
@@ -29,7 +37,10 @@ class _TratamentoFormScreenState extends State<TratamentoFormScreen> {
   static const _totalEtapas = 3;
 
   final _formKey = GlobalKey<FormState>();
-  late final _rascunho = RascunhoTratamento(widget.original);
+  late final _rascunho = RascunhoTratamento(
+    widget.original,
+    sugestao: widget.sugestao,
+  );
   int _etapa = 0;
   bool _salvando = false;
 
@@ -71,16 +82,29 @@ class _TratamentoFormScreenState extends State<TratamentoFormScreen> {
     try {
       if (_editando) {
         await repositorio.atualizar(widget.original!.id, dados);
-      } else {
-        await repositorio.criar(dados);
+        if (!mounted) return;
+        // Início, Tratamentos e Histórico recarregam sozinhos.
+        context.read<Mudancas>().tratamentosMudaram();
+        AppSnackBar.info(context, 'Tratamento atualizado!');
+        context.pop(true);
+        return;
       }
+
+      final id = await repositorio.criar(dados);
+      final primeiraDose = await _primeiraDose(id);
+      if (!mounted) return;
+      context.read<Mudancas>().tratamentosMudaram();
+      setState(() => _salvando = false);
+      await _confirmarCadastro(primeiraDose);
       if (!mounted) return;
 
-      AppSnackBar.info(
-        context,
-        _editando ? 'Tratamento atualizado!' : 'Tratamento cadastrado!',
-      );
-      context.pop(true);
+      // Da MIA, volta para a lista dos remédios lidos (pode haver outros);
+      // senão, vai para o Início.
+      if (widget.sugestao != null) {
+        context.pop(true);
+      } else {
+        context.go(Rotas.inicio);
+      }
     } on ApiException catch (e) {
       if (mounted) AppSnackBar.erro(context, e.mensagem);
     } catch (_) {
@@ -92,15 +116,69 @@ class _TratamentoFormScreenState extends State<TratamentoFormScreen> {
     }
   }
 
+  /// "Primeira dose: amanhã às 00:00. Ela aparece no Início a partir de
+  /// amanhã." O backend não cria doses em horários que já passaram, então
+  /// a primeira pode ser só outro dia; avisar evita a pessoa achar que o
+  /// cadastro não apareceu no Início (que mostra só as doses de hoje).
+  /// Nulo se não souber (o cadastro já deu certo de qualquer jeito).
+  Future<String?> _primeiraDose(int? id) async {
+    if (id == null) return null;
+    try {
+      final quando = await context.read<DoseRepository>().primeiraPendente(id);
+      if (quando == null) return null;
+      final agora = DateTime.now();
+      final aviso = 'Primeira dose: ${descreverQuando(quando, agora)}.';
+      if (mesmoDia(quando, agora)) return aviso;
+      return '$aviso\nEla aparece no Início a partir de '
+          '${descreverDia(quando, agora)}.';
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Janela de confirmação do cadastro, com a primeira dose.
+  Future<void> _confirmarCadastro(String? primeiraDose) => showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (contexto) => AlertDialog(
+          icon: const Icon(
+            Icons.check_circle_rounded,
+            color: AppColors.ciano,
+            size: 48,
+          ),
+          title: const Text('Tratamento cadastrado!'),
+          content: Text(
+            primeiraDose ?? 'Ele já aparece na sua lista de tratamentos.',
+            textAlign: TextAlign.center,
+          ),
+          actionsAlignment: MainAxisAlignment.center,
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.of(contexto).pop(),
+              style: FilledButton.styleFrom(backgroundColor: AppColors.ciano),
+              child: Text(
+                widget.sugestao != null ? 'Continuar' : 'Ir para o Início',
+              ),
+            ),
+          ],
+        ),
+      );
+
   @override
   Widget build(BuildContext context) {
     final (icone, titulo, subtitulo, conteudo) = switch (_etapa) {
       0 => (
           Icons.medication_outlined,
-          _editando ? 'Editar tratamento' : 'Novo tratamento',
+          _editando
+              ? 'Editar tratamento'
+              : widget.sugestao != null
+                  ? 'Revisar tratamento'
+                  : 'Novo tratamento',
           _editando
               ? 'Atualize as informações do tratamento.'
-              : 'Vamos cadastrar seu tratamento.',
+              : widget.sugestao != null
+                  ? 'Confira o que a MIA leu da sua receita.'
+                  : 'Vamos cadastrar seu tratamento.',
           EtapaMedicamento(rascunho: _rascunho, onMudou: _atualizar) as Widget,
         ),
       1 => (
@@ -144,7 +222,16 @@ class _TratamentoFormScreenState extends State<TratamentoFormScreen> {
                   // Cada etapa começa do topo.
                   key: ValueKey(_etapa),
                   padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
-                  child: Form(key: _formKey, child: conteudo),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      children: [
+                        if (widget.sugestao case final lido?)
+                          AvisoMia(lido: lido, etapa: _etapa),
+                        conteudo,
+                      ],
+                    ),
+                  ),
                 ),
               ),
               Padding(

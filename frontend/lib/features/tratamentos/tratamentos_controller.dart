@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../core/api/api_client.dart';
+import '../../core/mudancas.dart';
 import 'tratamento.dart';
 import 'tratamento_repository.dart';
 
@@ -12,7 +13,11 @@ class TratamentosController extends ChangeNotifier {
   String? _erro;
   bool _descartado = false;
 
-  TratamentosController(this._repositorio);
+  final Mudancas? _mudancas;
+
+  TratamentosController(this._repositorio, {this._mudancas}) {
+    _mudancas?.addListener(carregar);
+  }
 
   bool get carregando => _carregando;
   String? get erro => _erro;
@@ -47,6 +52,7 @@ class TratamentosController extends ChangeNotifier {
 
   @override
   void dispose() {
+    _mudancas?.removeListener(carregar);
     _descartado = true;
     super.dispose();
   }

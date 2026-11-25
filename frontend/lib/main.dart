@@ -7,10 +7,14 @@ import 'package:provider/provider.dart';
 import 'app/rotas.dart';
 import 'app/router.dart';
 import 'core/api/api_client.dart';
+import 'core/mudancas.dart';
 import 'core/storage/session_storage.dart';
 import 'features/auth/auth_repository.dart';
 import 'features/auth/sessao_controller.dart';
 import 'features/doses/dose_repository.dart';
+import 'features/mia/anuncio_premiado.dart';
+import 'features/mia/digitalizar_prescricao_screen.dart';
+import 'features/mia/mia_repository.dart';
 import 'features/tratamentos/tratamento_repository.dart';
 import 'theme/app_theme.dart';
 
@@ -40,6 +44,11 @@ class MedTrackApp extends StatefulWidget {
   final SessaoController sessao;
   final TratamentoRepository tratamentos;
   final DoseRepository doses;
+
+  /// Opcionais: sem eles, usa os de verdade (os testes passam falsos).
+  final MiaRepository? mia;
+  final AnuncioPremiado? anuncio;
+  final EscolherArquivo? escolherArquivo;
   final String rotaInicial;
 
   const MedTrackApp({
@@ -49,6 +58,9 @@ class MedTrackApp extends StatefulWidget {
     required this.sessao,
     required this.tratamentos,
     required this.doses,
+    this.mia,
+    this.anuncio,
+    this.escolherArquivo,
     this.rotaInicial = Rotas.splash,
   });
 
@@ -61,10 +73,15 @@ class _MedTrackAppState extends State<MedTrackApp> {
     widget.sessao,
     rotaInicial: widget.rotaInicial,
   );
+  final _mudancas = Mudancas();
+  late final _mia = widget.mia ?? MiaRepository(widget.api);
+  late final AnuncioPremiado _anuncio =
+      widget.anuncio ?? const AnuncioSimulado();
 
   @override
   void dispose() {
     _router.dispose();
+    _mudancas.dispose();
     super.dispose();
   }
 
@@ -76,6 +93,14 @@ class _MedTrackAppState extends State<MedTrackApp> {
         Provider.value(value: widget.auth),
         Provider.value(value: widget.tratamentos),
         Provider.value(value: widget.doses),
+        Provider.value(value: _mia),
+        Provider.value(value: _anuncio),
+        Provider<EscolherArquivo>.value(
+          value: widget.escolherArquivo ?? escolherArquivoDoAparelho,
+        ),
+        // As telas só leem (read) e escutam por conta própria, então o
+        // aviso não redesenha o app inteiro.
+        ChangeNotifierProvider.value(value: _mudancas),
         ChangeNotifierProvider.value(value: widget.sessao),
       ],
       child: MaterialApp.router(

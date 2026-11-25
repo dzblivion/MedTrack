@@ -21,12 +21,9 @@ class TratamentosScreen extends StatefulWidget {
 class _TratamentosScreenState extends State<TratamentosScreen> {
   bool _verFinalizados = false;
 
-  // As telas de cadastro e de detalhe devolvem true quando algo mudou.
-  Future<void> _abrir(String rota) async {
-    final controller = context.read<TratamentosController>();
-    final mudou = await context.push<bool>(rota);
-    if (mudou == true) await controller.carregar();
-  }
+  // Ao salvar ou mudar o status, o cadastro e o detalhe avisam (Mudancas)
+  // e a lista recarrega sozinha.
+  void _abrir(String rota) => context.push<bool>(rota);
 
   @override
   Widget build(BuildContext context) {

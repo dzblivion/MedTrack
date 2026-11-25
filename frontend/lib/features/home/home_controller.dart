@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import '../../core/api/api_client.dart';
+import '../../core/mudancas.dart';
 import '../doses/dose.dart';
 import '../doses/dose_repository.dart';
 
@@ -23,9 +24,15 @@ class HomeController extends ChangeNotifier {
   /// o relógio sem precisar recarregar.
   Timer? _tique;
 
-  HomeController(this._repositorio, {DateTime Function()? relogio})
-      : _relogio = relogio ?? DateTime.now {
+  final Mudancas? _mudancas;
+
+  HomeController(
+    this._repositorio, {
+    DateTime Function()? relogio,
+    this._mudancas,
+  }) : _relogio = relogio ?? DateTime.now {
     _tique = Timer.periodic(const Duration(seconds: 30), (_) => _avisar());
+    _mudancas?.addListener(carregar);
   }
 
   /// Todas as doses de hoje, em ordem de horário.
@@ -102,6 +109,7 @@ class HomeController extends ChangeNotifier {
 
   @override
   void dispose() {
+    _mudancas?.removeListener(carregar);
     _tique?.cancel();
     _descartado = true;
     super.dispose();

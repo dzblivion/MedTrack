@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../core/mudancas.dart';
 import '../features/auth/cadastro_screen.dart';
 import '../features/auth/confirmar_cadastro_screen.dart';
 import '../features/auth/dados_cadastro.dart';
@@ -16,6 +17,10 @@ import '../features/historico/historico_controller.dart';
 import '../features/historico/historico_screen.dart';
 import '../features/historico/historico_tratamento_screen.dart';
 import '../features/home/home_screen.dart';
+import '../features/mia/digitalizar_prescricao_screen.dart';
+import '../features/mia/medicamento_lido.dart';
+import '../features/mia/plus_screen.dart';
+import '../features/mia/resultado_mia_screen.dart';
 import '../features/perfil/perfil_screen.dart';
 import '../features/perfil/texto_legal_screen.dart';
 import '../features/perfil/textos_legais.dart';
@@ -112,6 +117,35 @@ GoRouter criarRouter(
           secoes: politicaDePrivacidade,
         ),
       ),
+      // MIA: telas inteiras, por cima do menu (precisam de login).
+      GoRoute(
+        path: Rotas.mia,
+        builder: (context, state) => DigitalizarPrescricaoScreen(
+          escolherArquivo: context.read<EscolherArquivo>(),
+        ),
+      ),
+      // Sem a leitura (ex.: página recarregada), volta para a câmera.
+      GoRoute(
+        path: Rotas.miaResultado,
+        redirect: (context, state) =>
+            state.extra is ResultadoMia ? null : Rotas.mia,
+        builder: (context, state) =>
+            ResultadoMiaScreen(resultado: state.extra as ResultadoMia),
+      ),
+      // Com um remédio lido, o formulário vem preenchido; sem, fica vazio
+      // ("Cadastrar manualmente").
+      GoRoute(
+        path: Rotas.miaRevisar,
+        builder: (context, state) => TratamentoFormScreen(
+          sugestao: state.extra is MedicamentoLido
+              ? state.extra as MedicamentoLido
+              : null,
+        ),
+      ),
+      GoRoute(
+        path: Rotas.plus,
+        builder: (context, state) => const PlusScreen(),
+      ),
       StatefulShellRoute.indexedStack(
         // Home e Histórico ficam acima do menu para o menu poder recarregá-los
         // ao abrir a aba (ex.: depois de cadastrar um tratamento). O
@@ -119,12 +153,16 @@ GoRouter criarRouter(
         builder: (context, state, navegacao) => MultiProvider(
           providers: [
             ChangeNotifierProvider(
-              create: (context) =>
-                  HomeController(context.read<DoseRepository>())..carregar(),
+              create: (context) => HomeController(
+                context.read<DoseRepository>(),
+                mudancas: context.read<Mudancas>(),
+              )..carregar(),
             ),
             ChangeNotifierProvider(
-              create: (context) =>
-                  HistoricoController(context.read<DoseRepository>()),
+              create: (context) => HistoricoController(
+                context.read<DoseRepository>(),
+                mudancas: context.read<Mudancas>(),
+              ),
             ),
           ],
           child: AppShell(navegacao: navegacao),
@@ -145,6 +183,7 @@ GoRouter criarRouter(
                 builder: (context, state) => ChangeNotifierProvider(
                   create: (context) => TratamentosController(
                     context.read<TratamentoRepository>(),
+                    mudancas: context.read<Mudancas>(),
                   )..carregar(),
                   child: const TratamentosScreen(),
                 ),

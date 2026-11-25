@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../app/rotas.dart';
 import '../../core/api/api_client.dart';
+import '../../core/mudancas.dart';
 import '../../core/formatos.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_snackbar.dart';
@@ -85,6 +86,8 @@ class _TratamentoDetalheScreenState extends State<TratamentoDetalheScreen> {
     try {
       await acao();
       _mudou = true;
+      // Pausar, concluir ou cancelar muda as doses do Início e do Histórico.
+      if (mounted) context.read<Mudancas>().tratamentosMudaram();
       await _carregar();
       if (mounted) AppSnackBar.info(context, sucesso);
     } on ApiException catch (e) {

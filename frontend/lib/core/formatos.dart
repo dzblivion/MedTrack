@@ -59,4 +59,24 @@ String formatarMesAno(DateTime data) {
   return '${mes[0].toUpperCase()}${mes.substring(1)} de ${data.year}';
 }
 
+/// "hoje", "amanhã" ou "sábado, 28/11".
+String descreverDia(DateTime dia, DateTime agora) {
+  final dias = DateTime.utc(dia.year, dia.month, dia.day)
+      .difference(DateTime.utc(agora.year, agora.month, agora.day))
+      .inDays;
+  return switch (dias) {
+    0 => 'hoje',
+    1 => 'amanhã',
+    _ => '${diaDaSemana(dia)}, ${formatarDiaMes(dia)}',
+  };
+}
+
+/// "hoje às 20:00", "amanhã às 00:00" ou "sábado, 28/11 às 08:00".
+String descreverQuando(DateTime quando, DateTime agora) =>
+    '${descreverDia(quando, agora)} às '
+    '${_doisDigitos(quando.hour)}:${_doisDigitos(quando.minute)}';
+
+bool mesmoDia(DateTime a, DateTime b) =>
+    a.year == b.year && a.month == b.month && a.day == b.day;
+
 String _doisDigitos(int valor) => valor.toString().padLeft(2, '0');

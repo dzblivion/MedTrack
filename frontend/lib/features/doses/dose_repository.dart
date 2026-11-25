@@ -32,6 +32,19 @@ class DoseRepository {
     return doses..sort((a, b) => b.agendadaPara.compareTo(a.agendadaPara));
   }
 
+  /// Horário da próxima dose pendente do tratamento (nulo se não houver).
+  /// O backend não cria doses em horários que já passaram, então logo
+  /// depois do cadastro esta é a primeira dose.
+  Future<DateTime?> primeiraPendente(int tratamentoId) async {
+    final dados = await _api.get('/tratamentos/$tratamentoId/doses');
+    final horarios = [
+      for (final lista in ['doses_atrasadas', 'proximas_doses'])
+        for (final item in dados[lista] as List? ?? const [])
+          DateTime.parse((item as Map<String, dynamic>)['agendada_para'] as String),
+    ]..sort();
+    return horarios.firstOrNull;
+  }
+
   /// Todas as doses de um tratamento (para a contagem no detalhe).
   Future<List<Dose>> doTratamento(Tratamento tratamento) =>
       _dosesDe(tratamento);

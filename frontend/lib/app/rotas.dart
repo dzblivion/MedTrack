@@ -16,6 +16,12 @@ abstract final class Rotas {
   /// Histórico só das doses de um tratamento, aberto por cima do detalhe.
   static String historicoDoTratamento(int id) => '/tratamentos/$id/historico';
   static const perfil = '/perfil';
+
+  /// MIA: câmera → resultado da leitura → revisar cada remédio.
+  static const mia = '/mia';
+  static const miaResultado = '/mia/resultado';
+  static const miaRevisar = '/mia/revisar';
+  static const plus = '/plus';
   static const termos = '/termos';
   static const privacidade = '/privacidade';
 }

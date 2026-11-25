@@ -13,6 +13,10 @@ import 'package:frontend/features/auth/sessao_controller.dart';
 import 'package:frontend/features/auth/usuario.dart';
 import 'package:frontend/features/doses/dose.dart';
 import 'package:frontend/features/doses/dose_repository.dart';
+import 'package:frontend/features/mia/anuncio_premiado.dart';
+import 'package:frontend/features/mia/digitalizar_prescricao_screen.dart';
+import 'package:frontend/features/mia/medicamento_lido.dart';
+import 'package:frontend/features/mia/mia_repository.dart';
 import 'package:frontend/features/tratamentos/dados_tratamento.dart';
 import 'package:frontend/features/tratamentos/frequencia.dart';
 import 'package:frontend/features/tratamentos/tratamento.dart';
@@ -161,9 +165,10 @@ class TratamentoFake extends TratamentoRepository {
   }
 
   @override
-  Future<void> criar(DadosTratamento dados) async {
+  Future<int?> criar(DadosTratamento dados) async {
     if (erroSalvar != null) throw erroSalvar!;
     criado = dados.toJson();
+    return 99;
   }
 
   @override
@@ -207,6 +212,16 @@ class DoseFake extends DoseRepository {
 
   /// Falha a próxima busca das doses de um tratamento (detalhe).
   ApiException? erroDoTratamento;
+
+  /// Resposta de [primeiraPendente] (o aviso ao cadastrar).
+  DateTime? primeiraDose;
+  int? pediuPrimeiraDe;
+
+  @override
+  Future<DateTime?> primeiraPendente(int tratamentoId) async {
+    pediuPrimeiraDe = tratamentoId;
+    return primeiraDose;
+  }
 
   @override
   Future<List<Dose>> doTratamento(Tratamento tratamento) async {
@@ -260,6 +275,46 @@ Dose doseExemplo({
       status: status,
     );
 
+/// MIA falsa: devolve [resultado] ou lança [erro], e guarda o que recebeu.
+class MiaFake extends MiaRepository {
+  ResultadoMia resultado;
+  ApiException? erro;
+  final enviados = <String>[];
+
+  MiaFake([this.resultado = const ResultadoMia(
+    textoExtraido: '',
+    medicamentos: [],
+  )]) : super(ApiClient());
+
+  @override
+  Future<ResultadoMia> lerPrescricao({
+    required List<int> bytes,
+    required String nomeArquivo,
+  }) async {
+    enviados.add(nomeArquivo);
+    final falha = erro;
+    if (falha != null) {
+      erro = null;
+      throw falha;
+    }
+    return resultado;
+  }
+}
+
+/// Anúncio falso: não mostra nada; [assistiu] decide a recompensa.
+class AnuncioFake implements AnuncioPremiado {
+  bool assistiu;
+  int exibicoes = 0;
+
+  AnuncioFake({this.assistiu = true});
+
+  @override
+  Future<bool> exibir(BuildContext context) async {
+    exibicoes++;
+    return assistiu;
+  }
+}
+
 /// Tratamento de exemplo que começou há [diasAtras] dias.
 Tratamento tratamentoExemplo({
   int id = 1,
@@ -309,6 +364,9 @@ Future<SessaoController> abrirApp(
   StorageMemoria? storage,
   TratamentoRepository? tratamentos,
   DoseRepository? doses,
+  MiaRepository? mia,
+  AnuncioPremiado? anuncio,
+  EscolherArquivo? escolherArquivo,
   String rota = Rotas.splash,
 }) async {
   final apiUsada = api ?? ApiClient();
@@ -327,6 +385,9 @@ Future<SessaoController> abrirApp(
       sessao: sessao,
       tratamentos: tratamentos ?? TratamentoFake(),
       doses: doses ?? DoseFake(),
+      mia: mia ?? MiaFake(),
+      anuncio: anuncio ?? AnuncioFake(),
+      escolherArquivo: escolherArquivo ?? () async => null,
       rotaInicial: rota,
     ),
   );

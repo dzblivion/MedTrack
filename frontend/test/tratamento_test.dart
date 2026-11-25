@@ -80,4 +80,14 @@ void main() {
     expect(formatarNumero(2.25), '2,25');
     expect(formatarDiaMes(DateTime(2026, 3, 7)), '07/03');
   });
+
+  test('descreve quando vai ser a dose', () {
+    final agora = DateTime(2026, 11, 25, 19, 30);
+    expect(descreverQuando(DateTime(2026, 11, 25, 20), agora), 'hoje às 20:00');
+    expect(descreverQuando(DateTime(2026, 11, 26, 0), agora), 'amanhã às 00:00');
+    expect(
+      descreverQuando(DateTime(2026, 11, 28, 8, 5), agora),
+      'sábado, 28/11 às 08:05',
+    );
+  });
 }

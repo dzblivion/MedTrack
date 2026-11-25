@@ -74,11 +74,12 @@ void main() {
     expect(find.text('A cada 8 horas · início às 06:00'), findsOneWidget);
   });
 
-  testWidgets('ativo: pausar troca para Retomar e a lista recarrega ao voltar', (
+  testWidgets('ativo: pausar troca para Retomar e a lista já volta atualizada', (
     tester,
   ) async {
     final tratamentos = TratamentoFake([tratamentoExemplo()]);
     await abrirDetalhe(tester, tratamentos);
+    final buscasAntes = tratamentos.buscas;
 
     expect(find.text('Editar'), findsOneWidget);
     expect(find.text('Concluir'), findsOneWidget);
@@ -91,11 +92,12 @@ void main() {
     expect(find.text('Retomar'), findsOneWidget);
     expect(find.text('Pausar'), findsNothing);
 
-    final buscasAntes = tratamentos.buscas;
     await voltar(tester);
 
+    // A lista recarregou uma vez, quando o status mudou.
     expect(find.text('Meus tratamentos:'), findsOneWidget);
     expect(tratamentos.buscas, buscasAntes + 1);
+    expect(find.text('pausado'), findsOneWidget);
   });
 
   testWidgets('cancelar pede confirmação e depois bloqueia a edição', (

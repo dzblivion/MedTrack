@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../app/rotas.dart';
 import '../../core/api/api_client.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_snackbar.dart';
@@ -18,11 +20,8 @@ import 'widgets/card_proxima_dose.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-  // A MIA (ler a prescrição) depende das chaves da Azure e do Gemini.
-  static void _emBreve(BuildContext context) => AppSnackBar.info(
-        context,
-        'A leitura de prescrição pela MIA chega em breve.',
-      );
+  /// Abre a câmera para a MIA ler a receita.
+  static void _abrirMia(BuildContext context) => context.push(Rotas.mia);
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +38,7 @@ class HomeScreen extends StatelessWidget {
               nome: nome,
               acao: BotaoCabecalho(
                 texto: 'Nova prescrição',
-                onPressed: () => _emBreve(context),
+                onPressed: () => _abrirMia(context),
               ),
             ),
             const SizedBox(height: 25),
@@ -117,7 +116,7 @@ class HomeScreen extends StatelessWidget {
         ),
       ],
       const SizedBox(height: 14),
-      CardMia(onConhecer: () => _emBreve(context)),
+      CardMia(onConhecer: () => _abrirMia(context)),
     ];
   }
 

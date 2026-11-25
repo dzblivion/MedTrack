@@ -51,26 +51,50 @@ class ApiClient {
 
   Future<Map<String, dynamic>> delete(String path) => _enviar('DELETE', path);
 
+  /// Envia um arquivo (ex.: foto da receita) como formulário multipart.
+  /// [espera] é maior que o padrão porque o processamento pode demorar.
+  Future<Map<String, dynamic>> enviarArquivo(
+    String path, {
+    required String campo,
+    required List<int> bytes,
+    required String nomeArquivo,
+    Duration espera = const Duration(seconds: 60),
+  }) {
+    final requisicao = http.MultipartRequest('POST', Uri.parse('$baseUrl$path'))
+      ..files.add(
+        http.MultipartFile.fromBytes(campo, bytes, filename: nomeArquivo),
+      );
+    return _executar(requisicao, espera);
+  }
+
   Future<Map<String, dynamic>> _enviar(
     String metodo,
     String path, {
     Map<String, dynamic>? body,
     Map<String, String>? query,
-  }) async {
-    final tokenEnviado = token;
+  }) {
     final requisicao = http.Request(
       metodo,
       Uri.parse('$baseUrl$path').replace(queryParameters: query),
     )..headers['Content-Type'] = 'application/json';
+    if (body != null) requisicao.body = jsonEncode(body);
+    return _executar(requisicao, const Duration(seconds: 10));
+  }
 
+  /// Envia com o token, trata o tempo de espera e transforma as respostas
+  /// de erro em [ApiException] com a mensagem do backend.
+  Future<Map<String, dynamic>> _executar(
+    http.BaseRequest requisicao,
+    Duration espera,
+  ) async {
+    final tokenEnviado = token;
     if (tokenEnviado != null) {
       requisicao.headers['Authorization'] = 'Bearer $tokenEnviado';
     }
-    if (body != null) requisicao.body = jsonEncode(body);
 
     try {
       final resposta = await http.Response.fromStream(
-        await _http.send(requisicao).timeout(const Duration(seconds: 10)),
+        await _http.send(requisicao).timeout(espera),
       );
       final dados = _decodificar(resposta.body);
 

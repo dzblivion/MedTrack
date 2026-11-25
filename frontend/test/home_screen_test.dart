@@ -292,15 +292,17 @@ void main() {
     expect(noCard('Amoxicilina'), findsOneWidget);
   });
 
-  testWidgets('Nova prescrição e a MIA avisam que chegam em breve', (
+  testWidgets('Conhecer a MIA e Nova prescrição abrem a câmera', (
     tester,
   ) async {
     await abrirHome(tester, DoseFake());
 
     await tocar(tester, 'Conhecer a MIA');
-    expect(
-      find.text('A leitura de prescrição pela MIA chega em breve.'),
-      findsOneWidget,
-    );
+    expect(find.text('Digitalizar prescrição'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Voltar'));
+    await tester.pumpAndSettle();
+    await tocar(tester, 'Nova prescrição');
+    expect(find.text('Digitalizar prescrição'), findsOneWidget);
   });
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import '../../../core/formatos.dart';
+import '../../mia/medicamento_lido.dart';
 import '../dados_tratamento.dart';
 import '../frequencia.dart';
 import '../tratamento.dart';
@@ -20,22 +21,29 @@ enum ModoFrequencia {
 /// Tudo o que foi preenchido nas 3 etapas. Fica na tela do formulário, então
 /// avançar e voltar entre as etapas não perde nada.
 class RascunhoTratamento {
+  /// Tratamento sendo editado (nulo num cadastro novo).
   final Tratamento? original;
 
-  RascunhoTratamento(this.original);
+  /// O que a MIA leu da receita, para já vir preenchido (cadastro novo).
+  final MedicamentoLido? sugestao;
 
-  Frequencia? get _freq => original?.frequencia;
+  RascunhoTratamento(this.original, {this.sugestao});
+
+  Frequencia? get _freq =>
+      original?.frequencia ?? sugestao?.frequenciaSugerida;
 
   // Etapa 1: medicamento.
-  late final medicamento = TextEditingController(text: original?.medicamento);
+  late final medicamento = TextEditingController(
+    text: original?.medicamento ?? sugestao?.medicamento,
+  );
   late final dosagem = TextEditingController(
-    text: _numero(original?.dosagemValor),
+    text: _numero(original?.dosagemValor ?? sugestao?.dosagemValor),
   );
   late final quantidade = TextEditingController(
-    text: _numero(original?.quantidadePorDose),
+    text: _numero(original?.quantidadePorDose ?? sugestao?.quantidadePorDose),
   );
-  late String? unidade = original?.dosagemUnidade;
-  late String? forma = original?.formaConsumo;
+  late String? unidade = original?.dosagemUnidade ?? sugestao?.dosagemUnidade;
+  late String? forma = original?.formaConsumo ?? sugestao?.formaConsumo;
 
   // Etapa 2: frequência e horários.
   late ModoFrequencia? modo = switch (_freq?.tipo) {
@@ -52,15 +60,19 @@ class RascunhoTratamento {
   /// "HH:MM", em ordem. Em intervalos, guarda só a primeira dose.
   late final List<String> horarios = [...?_freq?.horarios];
   late final Set<int> dias = {...?_freq?.diasSemana};
-  late DateTime dataInicio = original?.dataInicio ?? _hoje();
+  late DateTime dataInicio =
+      original?.dataInicio ?? sugestao?.dataInicio ?? _hoje();
   late final dataInicioTexto = TextEditingController(
     text: formatarData(dataInicio),
   );
 
   // Etapa 3: duração.
-  late bool continuo = original?.usoContinuo ?? false;
+  late bool continuo = original != null
+      ? original!.usoContinuo
+      : sugestao?.duracaoSugerida?.continuo ?? false;
   late final duracao = TextEditingController(
-    text: original?.duracaoDias?.toString(),
+    text: (original?.duracaoDias ?? sugestao?.duracaoSugerida?.dias)
+        ?.toString(),
   );
   late final termino = TextEditingController(text: _textoTermino());
 

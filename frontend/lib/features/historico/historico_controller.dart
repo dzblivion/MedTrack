@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/formatos.dart';
+import '../../core/mudancas.dart';
 import '../doses/dose.dart';
 import '../doses/dose_repository.dart';
 
@@ -31,8 +32,20 @@ class HistoricoController extends ChangeNotifier {
   bool _carregou = false;
   bool _irParaUltimaAoCarregar = false;
 
-  HistoricoController(this._repositorio, {DateTime Function()? relogio})
-      : _relogio = relogio ?? DateTime.now;
+  final Mudancas? _mudancas;
+
+  HistoricoController(
+    this._repositorio, {
+    DateTime Function()? relogio,
+    this._mudancas,
+  }) : _relogio = relogio ?? DateTime.now {
+    _mudancas?.addListener(_recarregarSeJaAbriu);
+  }
+
+  /// Só recarrega se a tela já foi aberta (senão, carrega ao abrir).
+  void _recarregarSeJaAbriu() {
+    if (_iniciado) carregar();
+  }
 
   DateTime get agora => _relogio();
   DateTime get mes => _mes;
@@ -184,6 +197,7 @@ class HistoricoController extends ChangeNotifier {
 
   @override
   void dispose() {
+    _mudancas?.removeListener(_recarregarSeJaAbriu);
     _descartado = true;
     super.dispose();
   }
