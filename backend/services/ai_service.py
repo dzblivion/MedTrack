@@ -14,7 +14,7 @@ def estruturar_prescricao(texto_ocr: str) -> dict:
     if not api_key:
         raise ValueError("GEMINI_API_KEY não está configurada.")
 
-    modelo = os.getenv("GEMINI_MODEL", "gemini-3.6-flash")
+    modelo = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
     client = genai.Client(api_key=api_key)
 
     resposta = None
