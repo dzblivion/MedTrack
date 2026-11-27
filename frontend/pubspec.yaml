@@ -45,6 +45,7 @@ dependencies:
   file_picker: ^13.3.2
   flutter_local_notifications: ^23.0.0
   timezone: ^0.11.2
+  google_mobile_ads: ^9.2.0
 
 dev_dependencies:
   flutter_test:
@@ -56,6 +57,16 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
+
+flutter_launcher_icons:
+  android: true
+  image_path: "assets/icon/medtrack.png"
+  web:
+    generate: true
+    image_path: "assets/icon/medtrack.png"
+    background_color: "#F7FAFA"
+    theme_color: "#27B8B5"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

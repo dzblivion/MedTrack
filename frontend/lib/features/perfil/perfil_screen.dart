@@ -35,20 +35,20 @@ class PerfilScreen extends StatelessWidget {
           children: [
             ListTile(
               leading: const Icon(Icons.photo_camera_outlined),
-              title: const Text('Tirar foto'),
+              title: Text('Tirar foto', style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w600, fontSize: 12)),
               onTap: () => Navigator.of(contexto).pop(_OpcaoFoto.camera),
             ),
             ListTile(
               leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('Escolher da galeria'),
+              title: Text('Escolher da galeria', style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w600, fontSize: 12)),
               onTap: () => Navigator.of(contexto).pop(_OpcaoFoto.galeria),
             ),
             if (fotos.temFoto)
               ListTile(
                 leading: const Icon(Icons.delete_outline, color: AppColors.error),
-                title: const Text(
+                title: Text(
                   'Remover foto',
-                  style: TextStyle(color: AppColors.error),
+                  style: TextStyle(color: AppColors.error, fontFamily: 'Poppins', fontWeight: FontWeight.w600, fontSize: 12),
                 ),
                 onTap: () => Navigator.of(contexto).pop(_OpcaoFoto.remover),
               ),
@@ -104,17 +104,17 @@ class PerfilScreen extends StatelessWidget {
                 onPressed: () => _emBreve(context),
                 style: FilledButton.styleFrom(
                   backgroundColor: AppColors.ciano,
+                  elevation: 6,
+                  shadowColor: Colors.black.withValues(alpha: 0.6),
                   textStyle: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                   ),
-                  minimumSize: const Size(0, 32),
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+                  minimumSize: const Size(0, 36),
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  shape: const StadiumBorder(),
                 ),
-                child: const Text('Editar perfil'),
+                child: const Text('Editar perfil', style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w600)),
               ),
             ),
             const _Titulo('Dados pessoais'),

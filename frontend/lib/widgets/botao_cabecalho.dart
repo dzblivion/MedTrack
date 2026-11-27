@@ -31,7 +31,7 @@ class BotaoCabecalho extends StatelessWidget {
           fontWeight: FontWeight.w600,
         ),
         // Em formato de pílula, na proporção do avatar (48) ao lado.
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 14),
         minimumSize: const Size(0, 36),
         shape: const StadiumBorder(),
       ),

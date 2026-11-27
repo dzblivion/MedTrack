@@ -69,7 +69,7 @@ class _ResultadoMiaScreenState extends State<ResultadoMiaScreen> {
                           medicamentos.length == 1
                               ? 'A MIA encontrou 1 medicamento.'
                               : 'A MIA encontrou ${medicamentos.length} '
-                                  'medicamentos.',
+                                    'medicamentos.',
                           style: const TextStyle(
                             fontFamily: _fonte,
                             color: AppColors.title,
@@ -77,13 +77,26 @@ class _ResultadoMiaScreenState extends State<ResultadoMiaScreen> {
                             fontWeight: FontWeight.w700,
                           ),
                         ),
-                        const Text(
-                          'Toque em cada um para conferir e cadastrar. '
-                          'A extração da MIA pode conter erros.',
-                          style: TextStyle(
-                            fontFamily: _fonte,
-                            color: AppColors.gray,
-                            fontSize: 11,
+                        Text.rich(
+                          TextSpan(
+                            style: TextStyle(
+                              fontFamily: _fonte,
+                              color: AppColors.gray,
+                              fontSize: 10,
+                            ),
+                            children: const [
+                              TextSpan(
+                                text: 'Obs: ',
+                                style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.darkCiano)
+                              ),
+                              TextSpan(
+                                text: 'Toque em cada medicamento para conferir os dados e cadastrá-lo. Ao finalizar, '
+                              ),
+                              TextSpan(
+                                text: 'os que não forem cadastrados serão descartados.',
+                                style: TextStyle(fontWeight: FontWeight.w600)
+                              ),
+                            ]
                           ),
                         ),
                         const SizedBox(height: 14),
@@ -103,7 +116,7 @@ class _ResultadoMiaScreenState extends State<ResultadoMiaScreen> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
                 child: AppButton(
-                  texto: 'Concluir',
+                  texto: 'Finalizar',
                   onPressed: () => context.go(Rotas.inicio),
                 ),
               ),
@@ -114,39 +127,39 @@ class _ResultadoMiaScreenState extends State<ResultadoMiaScreen> {
   }
 
   List<Widget> _nadaEncontrado() => [
-        const SizedBox(height: 40),
-        const Icon(Icons.search_off_rounded, color: AppColors.gray, size: 48),
-        const SizedBox(height: 8),
-        const Text(
-          'A MIA não encontrou medicamentos nesta imagem.',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontFamily: _fonte,
-            color: AppColors.inputText,
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const Text(
-          'Tente uma foto mais nítida, com a receita inteira na moldura.',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontFamily: _fonte, color: AppColors.gray, fontSize: 11),
-        ),
-        const SizedBox(height: 16),
-        Center(
-          child: TextButton(
-            onPressed: () => context.pushReplacement(Rotas.mia),
-            child: const Text('Tirar outra foto'),
-          ),
-        ),
-        Center(
-          child: TextButton(
-            onPressed: () => context.pushReplacement(Rotas.miaRevisar),
-            child: const Text('Cadastrar manualmente'),
-          ),
-        ),
-        _TextoLido(texto: widget.resultado.textoExtraido),
-      ];
+    const SizedBox(height: 40),
+    const Icon(Icons.search_off_rounded, color: AppColors.gray, size: 48),
+    const SizedBox(height: 8),
+    const Text(
+      'A MIA não encontrou medicamentos nesta imagem.',
+      textAlign: TextAlign.center,
+      style: TextStyle(
+        fontFamily: _fonte,
+        color: AppColors.inputText,
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+      ),
+    ),
+    const Text(
+      'Tente uma foto mais nítida, com a receita inteira na moldura.',
+      textAlign: TextAlign.center,
+      style: TextStyle(fontFamily: _fonte, color: AppColors.gray, fontSize: 11),
+    ),
+    const SizedBox(height: 16),
+    Center(
+      child: TextButton(
+        onPressed: () => context.pushReplacement(Rotas.mia),
+        child: const Text('Tirar outra foto'),
+      ),
+    ),
+    Center(
+      child: TextButton(
+        onPressed: () => context.pushReplacement(Rotas.miaRevisar),
+        child: const Text('Cadastrar manualmente'),
+      ),
+    ),
+    _TextoLido(texto: widget.resultado.textoExtraido),
+  ];
 }
 
 class _CartaoMedicamento extends StatelessWidget {
