@@ -13,7 +13,7 @@ import bcrypt
 import jwt
 from config.database import banco
 from config.mail import mail
-from flask import Blueprint, current_app, jsonify, request
+from flask import Blueprint, abort, current_app, jsonify, request
 from flask_mail import Message
 
 usuario = Blueprint("usuario", __name__)
@@ -558,9 +558,23 @@ def obter_usuario_id():
             os.getenv("JWT_SECRET"),
             algorithms=["HS256"],
         )
-        return dados_token["usuario_id"]
+        usuario_id = dados_token["usuario_id"]
     except (jwt.InvalidTokenError, KeyError, TypeError):
         return None
+
+    if isinstance(usuario_id, bool) or not isinstance(usuario_id, int) or usuario_id <= 0:
+        return None
+
+    # Um token pode continuar assinado e vigente após a exclusão da conta.
+    try:
+        with sessao_banco() as (_, cursor):
+            cursor.execute("SELECT id FROM usuarios WHERE id = %s", (usuario_id,))
+            usuario_existe = cursor.fetchone() is not None
+    except Exception:
+        logger.exception("Erro ao verificar usuário autenticado")
+        abort(503, description="Não foi possível verificar a autenticação agora.")
+
+    return usuario_id if usuario_existe else None
 
 
 @usuario.route("/solicitar-codigo-cadastro", methods=["POST"])

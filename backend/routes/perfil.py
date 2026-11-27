@@ -5,6 +5,7 @@ from io import BytesIO
 from pathlib import Path
 from uuid import uuid4
 
+import bcrypt
 from flask import Blueprint, jsonify, request, send_file
 from PIL import Image, ImageOps, UnidentifiedImageError
 from routes.usuario import obter_usuario_id, sessao_banco
@@ -89,6 +90,89 @@ def buscar_espera_upload(cursor, usuario_id, bloquear=False):
         (INTERVALO_MINIMO_UPLOAD_SEGUNDOS, usuario_id),
     )
     return cursor.fetchone()
+
+
+@perfil.route("/usuarios/me", methods=["PATCH"])
+def atualizar_nome_perfil():
+    usuario_id = obter_usuario_id()
+    if usuario_id is None:
+        return jsonify({"erro": "Não autorizado!"}), 401
+
+    dados = request.get_json(silent=True)
+    nome = dados.get("nome") if isinstance(dados, dict) else None
+    if not isinstance(nome, str) or not nome.strip():
+        return jsonify({"erro": "Informe um nome válido!"}), 400
+    nome = nome.strip()
+    if len(nome) > 120:
+        return jsonify({"erro": "O nome deve ter no máximo 120 caracteres!"}), 400
+
+    try:
+        with sessao_banco() as (_, cursor):
+            cursor.execute("SELECT id FROM usuarios WHERE id = %s FOR UPDATE", (usuario_id,))
+            if not cursor.fetchone():
+                return jsonify({"erro": "Usuário não encontrado!"}), 404
+            cursor.execute("UPDATE usuarios SET nome = %s WHERE id = %s", (nome, usuario_id))
+    except Exception:
+        logger.exception("Erro ao atualizar nome do perfil")
+        return jsonify({"erro": "Não foi possível atualizar o nome!"}), 500
+
+    return jsonify({"mensagem": "Nome atualizado com sucesso!", "nome": nome}), 200
+
+
+@perfil.route("/usuarios/me", methods=["DELETE"])
+def excluir_conta():
+    usuario_id = obter_usuario_id()
+    if usuario_id is None:
+        return jsonify({"erro": "Não autorizado!"}), 401
+
+    dados = request.get_json(silent=True)
+    senha = dados.get("senha") if isinstance(dados, dict) else None
+    if not isinstance(senha, str) or not senha:
+        return jsonify({"erro": "Informe sua senha atual!"}), 400
+
+    try:
+        senha_bytes = senha.encode("utf-8")
+        if len(senha_bytes) > 72:
+            return jsonify({"erro": "Senha incorreta!"}), 403
+
+        with sessao_banco() as (_, cursor):
+            cursor.execute(
+                "SELECT email, senha_hash, foto_perfil FROM usuarios WHERE id = %s FOR UPDATE",
+                (usuario_id,),
+            )
+            usuario_encontrado = cursor.fetchone()
+            if not usuario_encontrado:
+                return jsonify({"erro": "Usuário não encontrado!"}), 404
+
+            senha_hash = usuario_encontrado["senha_hash"]
+            if isinstance(senha_hash, str):
+                senha_hash = senha_hash.encode("utf-8")
+            if not bcrypt.checkpw(senha_bytes, senha_hash):
+                return jsonify({"erro": "Senha incorreta!"}), 403
+
+            # Os compartilhamentos não possuem exclusão em cascata no esquema.
+            cursor.execute(
+                """
+                DELETE FROM compartilhamentos
+                WHERE paciente_usuario_id = %s OR profissional_usuario_id = %s
+                   OR tratamento_id IN (SELECT id FROM tratamentos WHERE usuario_id = %s)
+                """,
+                (usuario_id, usuario_id, usuario_id),
+            )
+            cursor.execute(
+                "DELETE FROM confirmacoes_cadastro WHERE email = %s",
+                (usuario_encontrado["email"],),
+            )
+            cursor.execute("DELETE FROM usuarios WHERE id = %s", (usuario_id,))
+            foto_anterior = usuario_encontrado["foto_perfil"]
+    except Exception:
+        logger.exception("Erro ao excluir conta")
+        return jsonify({"erro": "Não foi possível excluir a conta!"}), 500
+
+    # O banco já confirmou a transação; uma falha no arquivo é registrada no log.
+    remover_arquivo_foto(foto_anterior)
+    return jsonify({"mensagem": "Conta excluída com sucesso!"}), 200
+
 
 @perfil.route("/usuarios/me/foto", methods=["PUT"])
 def atualizar_foto_perfil():
