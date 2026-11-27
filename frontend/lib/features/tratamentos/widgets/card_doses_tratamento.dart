@@ -14,7 +14,10 @@ class CardDosesTratamento extends StatelessWidget {
 
   /// As doses não carregaram (o resto do detalhe continua funcionando).
   final bool falhou;
-  final VoidCallback onVerHistorico;
+
+  /// Nulo esconde o "Ver no histórico" (ex.: o profissional, que já vê as
+  /// doses logo abaixo).
+  final VoidCallback? onVerHistorico;
   final VoidCallback onTentarDeNovo;
 
   const CardDosesTratamento({
@@ -22,7 +25,7 @@ class CardDosesTratamento extends StatelessWidget {
     required this.resumo,
     required this.usoContinuo,
     required this.falhou,
-    required this.onVerHistorico,
+    this.onVerHistorico,
     required this.onTentarDeNovo,
   });
 
@@ -63,9 +66,16 @@ class CardDosesTratamento extends StatelessWidget {
       return [
         const Text(
           'Não foi possível carregar as doses.',
-          style: TextStyle(fontFamily: _fonte, color: AppColors.gray, fontSize: 12),
+          style: TextStyle(
+            fontFamily: _fonte,
+            color: AppColors.gray,
+            fontSize: 12,
+          ),
         ),
-        TextButton(onPressed: onTentarDeNovo, child: const Text('Tentar de novo')),
+        TextButton(
+          onPressed: onTentarDeNovo,
+          child: const Text('Tentar de novo'),
+        ),
       ];
     }
     if (r == null) {
@@ -82,12 +92,20 @@ class CardDosesTratamento extends StatelessWidget {
       return const [
         Text(
           'Nenhuma dose agendada para este tratamento.',
-          style: TextStyle(fontFamily: _fonte, color: AppColors.gray, fontSize: 12),
+          style: TextStyle(
+            fontFamily: _fonte,
+            color: AppColors.gray,
+            fontSize: 12,
+          ),
         ),
       ];
     }
 
-    const pequeno = TextStyle(fontFamily: _fonte, color: AppColors.gray, fontSize: 11);
+    const pequeno = TextStyle(
+      fontFamily: _fonte,
+      color: AppColors.gray,
+      fontSize: 11,
+    );
     return [
       // O contínuo só tem as próximas semanas criadas: não há total.
       if (usoContinuo)
@@ -137,7 +155,7 @@ class CardDosesTratamento extends StatelessWidget {
 
 class _AreaPerdidas extends StatelessWidget {
   final ResumoDoses resumo;
-  final VoidCallback onVerHistorico;
+  final VoidCallback? onVerHistorico;
 
   const _AreaPerdidas({required this.resumo, required this.onVerHistorico});
 
@@ -198,23 +216,26 @@ class _AreaPerdidas extends StatelessWidget {
                 ),
               ),
             ),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton.icon(
-              onPressed: onVerHistorico,
-              iconAlignment: IconAlignment.end,
-              icon: const Icon(Icons.chevron_right_rounded, size: 18),
-              label: const Text('Ver no histórico'),
-              style: TextButton.styleFrom(
-                foregroundColor: AppColors.darkCiano,
-                textStyle: const TextStyle(
-                  fontFamily: _fonte,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
+          if (onVerHistorico == null)
+            const SizedBox(height: 8)
+          else
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: onVerHistorico,
+                iconAlignment: IconAlignment.end,
+                icon: const Icon(Icons.chevron_right_rounded, size: 18),
+                label: const Text('Ver no histórico'),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.darkCiano,
+                  textStyle: const TextStyle(
+                    fontFamily: _fonte,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );

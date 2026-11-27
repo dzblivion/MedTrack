@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../core/api/api_client.dart';
-import '../../core/formatos.dart';
+import '../../core/formatos.dart' as formatos show rotuloDoDia;
 import '../../core/mudancas.dart';
 import '../doses/dose.dart';
 import '../doses/dose_repository.dart';
@@ -116,7 +116,10 @@ class HistoricoController extends ChangeNotifier {
       final quando = dose.agendadaPara;
       if (quando.year != _mes.year || quando.month != _mes.month) continue;
       porDia
-          .putIfAbsent(DateTime(quando.year, quando.month, quando.day), () => [])
+          .putIfAbsent(
+            DateTime(quando.year, quando.month, quando.day),
+            () => [],
+          )
           .add(dose);
     }
     // As doses já vêm em ordem decrescente, então os dias também.
@@ -124,19 +127,7 @@ class HistoricoController extends ChangeNotifier {
   }
 
   /// "Hoje – quinta, 19/11", "Ontem – ...", "Anteontem – ..." ou só a data.
-  String rotuloDoDia(DateTime dia) {
-    final hoje = agora;
-    final diferenca = DateTime.utc(hoje.year, hoje.month, hoje.day)
-        .difference(DateTime.utc(dia.year, dia.month, dia.day))
-        .inDays;
-    final data = '${diaDaSemana(dia)}, ${formatarDiaMes(dia)}';
-    return switch (diferenca) {
-      0 => 'Hoje – $data',
-      1 => 'Ontem – $data',
-      2 => 'Anteontem – $data',
-      _ => data,
-    };
-  }
+  String rotuloDoDia(DateTime dia) => formatos.rotuloDoDia(dia, agora);
 
   Future<void> carregar() async {
     // Só a busca mais recente vale (ex.: abrir a aba enquanto carrega).

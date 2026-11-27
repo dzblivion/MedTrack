@@ -22,6 +22,14 @@ abstract final class Rotas {
   static const miaResultado = '/mia/resultado';
   static const miaRevisar = '/mia/revisar';
   static const plus = '/plus';
+
+  /// Paciente: pedidos de acesso e quem acompanha seus tratamentos.
+  static const compartilhamentos = '/compartilhamentos';
+
+  /// Profissional: adicionar paciente pelo código e ver um tratamento.
+  static const adicionarPaciente = '/pacientes/adicionar';
+  static String tratamentoDePaciente(int compartilhamentoId) =>
+      '/pacientes/$compartilhamentoId';
   static const termos = '/termos';
   static const privacidade = '/privacidade';
 }

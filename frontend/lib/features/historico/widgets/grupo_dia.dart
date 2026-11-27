@@ -11,15 +11,17 @@ class GrupoDia extends StatelessWidget {
   final List<Dose> doses;
   final DateTime agora;
   final bool registrando;
-  final void Function(Dose dose, {required bool tomada}) onRegistrar;
+
+  /// Nulo para só ver as doses (ex.: o profissional).
+  final void Function(Dose dose, {required bool tomada})? onRegistrar;
 
   const GrupoDia({
     super.key,
     required this.rotulo,
     required this.doses,
     required this.agora,
-    required this.registrando,
-    required this.onRegistrar,
+    this.registrando = false,
+    this.onRegistrar,
   });
 
   @override
@@ -72,8 +74,13 @@ class GrupoDia extends StatelessWidget {
                     agora: agora,
                     registrando: registrando,
                     rotuloAtraso: 'não registrada',
-                    onRegistrar: ({required tomada}) =>
-                        onRegistrar(doses[i], tomada: tomada),
+                    onRegistrar: switch (onRegistrar) {
+                      final registrar? => ({required tomada}) => registrar(
+                        doses[i],
+                        tomada: tomada,
+                      ),
+                      null => null,
+                    },
                   ),
                 ],
               ],

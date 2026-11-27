@@ -10,7 +10,9 @@ import '../../widgets/botao_cabecalho.dart';
 import '../../widgets/cabecalho_usuario.dart';
 import '../auth/sessao_controller.dart';
 import '../doses/dose.dart';
+import '../compartilhamento/pedidos_controller.dart';
 import 'home_controller.dart';
+import 'widgets/aviso_pedidos.dart';
 import 'widgets/card_adesao.dart';
 import 'widgets/card_doses_do_dia.dart';
 import 'widgets/card_mia.dart';
@@ -94,7 +96,15 @@ class HomeScreen extends StatelessWidget {
     }
 
     final dose = controller.proximaDose;
+    final pedidos = context.watch<PedidosController>().pedidos;
     return [
+      if (pedidos.isNotEmpty) ...[
+        AvisoPedidos(
+          pedidos: pedidos,
+          onVer: () => context.push(Rotas.compartilhamentos),
+        ),
+        const SizedBox(height: 14),
+      ],
       CardProximaDose(
         dose: dose,
         agora: controller.agora,
@@ -131,7 +141,9 @@ class HomeScreen extends StatelessWidget {
       if (context.mounted) {
         AppSnackBar.info(
           context,
-          tomada ? 'Dose registrada como tomada.' : 'Dose registrada como não tomada.',
+          tomada
+              ? 'Dose registrada como tomada.'
+              : 'Dose registrada como não tomada.',
         );
       }
     } on ApiException catch (e) {

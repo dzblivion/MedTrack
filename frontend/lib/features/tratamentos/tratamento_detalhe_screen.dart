@@ -5,15 +5,17 @@ import 'package:provider/provider.dart';
 import '../../app/rotas.dart';
 import '../../core/api/api_client.dart';
 import '../../core/mudancas.dart';
-import '../../core/formatos.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_snackbar.dart';
+import '../compartilhamento/compartilhamento_repository.dart';
+import '../compartilhamento/widgets/codigo_dialog.dart';
 import '../doses/dose_repository.dart';
 import '../doses/resumo_doses.dart';
 import 'tratamento.dart';
 import 'tratamento_repository.dart';
 import 'widgets/acoes_tratamento.dart';
 import 'widgets/card_doses_tratamento.dart';
+import 'widgets/informacoes_tratamento.dart';
 
 /// Ao sair, devolve `true` se algo mudou, para a lista recarregar.
 class TratamentoDetalheScreen extends StatefulWidget {
@@ -81,6 +83,31 @@ class _TratamentoDetalheScreenState extends State<TratamentoDetalheScreen> {
     if (registrou == true && mounted) await _carregarDoses(t);
   }
 
+  /// Gera o código para um profissional acompanhar este tratamento.
+  Future<void> _compartilhar(Tratamento t) async {
+    setState(() => _ocupado = true);
+    try {
+      final codigo = await context
+          .read<CompartilhamentoRepository>()
+          .gerarCodigo(t.id);
+      if (!mounted) return;
+      setState(() => _ocupado = false);
+      await mostrarCodigoCompartilhamento(
+        context,
+        codigo: codigo,
+        medicamento: t.medicamento,
+      );
+    } on ApiException catch (e) {
+      if (mounted) AppSnackBar.erro(context, e.mensagem);
+    } catch (_) {
+      if (mounted) {
+        AppSnackBar.erro(context, 'Algo deu errado. Tente novamente.');
+      }
+    } finally {
+      if (mounted) setState(() => _ocupado = false);
+    }
+  }
+
   Future<void> _executar(Future<void> Function() acao, String sucesso) async {
     setState(() => _ocupado = true);
     try {
@@ -93,7 +120,9 @@ class _TratamentoDetalheScreenState extends State<TratamentoDetalheScreen> {
     } on ApiException catch (e) {
       if (mounted) AppSnackBar.erro(context, e.mensagem);
     } catch (_) {
-      if (mounted) AppSnackBar.erro(context, 'Algo deu errado. Tente novamente.');
+      if (mounted) {
+        AppSnackBar.erro(context, 'Algo deu errado. Tente novamente.');
+      }
     } finally {
       if (mounted) setState(() => _ocupado = false);
     }
@@ -188,27 +217,15 @@ class _TratamentoDetalheScreenState extends State<TratamentoDetalheScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(_erro!, style: const TextStyle(color: AppColors.gray)),
-            TextButton(onPressed: _carregar, child: const Text('Tentar de novo')),
+            TextButton(
+              onPressed: _carregar,
+              child: const Text('Tentar de novo'),
+            ),
           ],
         ),
       );
     }
     if (t == null) return const Center(child: CircularProgressIndicator());
-
-    final hoje = DateTime.now();
-    final fim = t.dataFim;
-    final duracao = t.duracaoDias;
-    final emCurso = t.status.emAndamento && !t.periodoEncerrado(hoje);
-    final progresso = switch (duracao) {
-      null when emCurso && t.diaAtual(hoje) > 0 =>
-        'uso contínuo · dia ${t.diaAtual(hoje)}',
-      null => 'uso contínuo',
-      _ when emCurso => 'dia ${t.diaAtual(hoje)} de $duracao',
-      _ => '$duracao dias',
-    };
-    final periodo = fim == null
-        ? 'desde ${formatarData(t.dataInicio)}'
-        : '${formatarData(t.dataInicio)} a ${formatarData(fim)}';
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
@@ -227,17 +244,7 @@ class _TratamentoDetalheScreenState extends State<TratamentoDetalheScreen> {
           style: const TextStyle(color: AppColors.gray, fontSize: 13),
         ),
         const SizedBox(height: 20),
-        _Informacoes(
-          itens: [
-            ('Dosagem', t.dosagem ?? 'não informada'),
-            ('Quantidade por dose', formatarNumero(t.quantidadePorDose)),
-            ('Forma de consumo', formasConsumo[t.formaConsumo] ?? t.formaConsumo),
-            // Só tratamentos de antes da frequência ser obrigatória ficam sem.
-            ('Frequência', t.frequencia?.descricao ?? 'não cadastrada'),
-            ('Período', periodo),
-            ('Duração', progresso),
-          ],
-        ),
+        InformacoesTratamento(tratamento: t),
         const SizedBox(height: 16),
         CardDosesTratamento(
           resumo: _resumo,
@@ -246,6 +253,20 @@ class _TratamentoDetalheScreenState extends State<TratamentoDetalheScreen> {
           onVerHistorico: () => _verHistorico(t),
           onTentarDeNovo: () => _carregarDoses(t),
         ),
+        // Só o paciente compartilha, e não dá para compartilhar cancelado.
+        if (t.status != StatusTratamento.cancelado) ...[
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: _ocupado ? null : () => _compartilhar(t),
+            icon: const Icon(Icons.share_outlined),
+            label: const Text('Compartilhar com profissional'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.darkCiano,
+              side: const BorderSide(color: AppColors.ciano),
+              minimumSize: const Size.fromHeight(44),
+            ),
+          ),
+        ],
         const SizedBox(height: 24),
         AcoesTratamento(
           status: t.status,
@@ -255,56 +276,6 @@ class _TratamentoDetalheScreenState extends State<TratamentoDetalheScreen> {
           onCancelar: _cancelar,
         ),
       ],
-    );
-  }
-}
-
-class _Informacoes extends StatelessWidget {
-  final List<(String, String)> itens;
-
-  const _Informacoes({required this.itens});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: const [
-          BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2)),
-        ],
-      ),
-      child: Column(
-        children: [
-          for (final (rotulo, valor) in itens)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Text(
-                      rotulo,
-                      style: const TextStyle(color: AppColors.gray, fontSize: 12),
-                    ),
-                  ),
-                  Expanded(
-                    child: Text(
-                      valor,
-                      textAlign: TextAlign.end,
-                      style: const TextStyle(
-                        color: AppColors.inputText,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-        ],
-      ),
     );
   }
 }

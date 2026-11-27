@@ -35,20 +35,42 @@ class PerfilScreen extends StatelessWidget {
           children: [
             ListTile(
               leading: const Icon(Icons.photo_camera_outlined),
-              title: Text('Tirar foto', style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w600, fontSize: 12)),
+              title: Text(
+                'Tirar foto',
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                ),
+              ),
               onTap: () => Navigator.of(contexto).pop(_OpcaoFoto.camera),
             ),
             ListTile(
               leading: const Icon(Icons.photo_library_outlined),
-              title: Text('Escolher da galeria', style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w600, fontSize: 12)),
+              title: Text(
+                'Escolher da galeria',
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                ),
+              ),
               onTap: () => Navigator.of(contexto).pop(_OpcaoFoto.galeria),
             ),
             if (fotos.temFoto)
               ListTile(
-                leading: const Icon(Icons.delete_outline, color: AppColors.error),
+                leading: const Icon(
+                  Icons.delete_outline,
+                  color: AppColors.error,
+                ),
                 title: Text(
                   'Remover foto',
-                  style: TextStyle(color: AppColors.error, fontFamily: 'Poppins', fontWeight: FontWeight.w600, fontSize: 12),
+                  style: TextStyle(
+                    color: AppColors.error,
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
                 ),
                 onTap: () => Navigator.of(contexto).pop(_OpcaoFoto.remover),
               ),
@@ -114,13 +136,26 @@ class PerfilScreen extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 14),
                   shape: const StadiumBorder(),
                 ),
-                child: const Text('Editar perfil', style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w600)),
+                child: const Text(
+                  'Editar perfil',
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
             ),
             const _Titulo('Dados pessoais'),
             _DadoPessoal(icone: Icons.person_outline, texto: nome),
             _DadoPessoal(icone: Icons.alternate_email, texto: email),
             const _Titulo('Configurações'),
+            // Só pacientes compartilham tratamentos.
+            if (usuario?.ehProfissional != true)
+              _ItemConfiguracao(
+                titulo: 'Compartilhamentos',
+                descricao: 'Profissionais que acompanham seus tratamentos',
+                onTap: () => context.push(Rotas.compartilhamentos),
+              ),
             _ItemConfiguracao(
               titulo: 'Notificações',
               descricao: 'Gerencie seus lembretes de medicamentos',

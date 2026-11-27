@@ -10,7 +10,9 @@ class LinhaDose extends StatelessWidget {
   final Dose dose;
   final DateTime agora;
   final bool registrando;
-  final void Function({required bool tomada}) onRegistrar;
+
+  /// Nulo para só ver, sem os botões Tomei/Não (ex.: o profissional).
+  final void Function({required bool tomada})? onRegistrar;
 
   /// Aviso em vermelho embaixo do horário quando a dose está atrasada
   /// ("atrasada" na Home, "não registrada" no Histórico).
@@ -21,7 +23,7 @@ class LinhaDose extends StatelessWidget {
     required this.dose,
     required this.agora,
     required this.registrando,
-    required this.onRegistrar,
+    this.onRegistrar,
     this.rotuloAtraso = 'atrasada',
   });
 
@@ -96,6 +98,7 @@ class LinhaDose extends StatelessWidget {
   }
 
   Widget _situacao() {
+    final registrar = onRegistrar;
     switch (dose.status) {
       case StatusDose.tomada:
         return const _Selo(
@@ -109,23 +112,27 @@ class LinhaDose extends StatelessWidget {
           icone: Icons.close_rounded,
           cor: AppColors.error,
         );
-      case StatusDose.pendente when dose.podeRegistrar(agora):
+      case StatusDose.pendente
+          when registrar != null && dose.podeRegistrar(agora):
         return Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             _BotaoPequeno(
               texto: 'Tomei',
               cor: AppColors.ciano,
-              onPressed: registrando ? null : () => onRegistrar(tomada: true),
+              onPressed: registrando ? null : () => registrar(tomada: true),
             ),
             const SizedBox(width: 6),
             _BotaoPequeno(
               texto: 'Não',
               cor: AppColors.error,
-              onPressed: registrando ? null : () => onRegistrar(tomada: false),
+              onPressed: registrando ? null : () => registrar(tomada: false),
             ),
           ],
         );
+      // Só leitura: a hora chegou e o paciente ainda não marcou.
+      case StatusDose.pendente when dose.podeRegistrar(agora):
+        return const SizedBox.shrink();
       case StatusDose.pendente:
         return const Text(
           'aguardando',

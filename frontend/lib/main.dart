@@ -11,6 +11,7 @@ import 'core/mudancas.dart';
 import 'core/storage/session_storage.dart';
 import 'features/auth/auth_repository.dart';
 import 'features/auth/sessao_controller.dart';
+import 'features/compartilhamento/compartilhamento_repository.dart';
 import 'features/doses/dose_repository.dart';
 import 'features/mia/anuncio_premiado.dart';
 import 'features/mia/digitalizar_prescricao_screen.dart';
@@ -53,6 +54,7 @@ class MedTrackApp extends StatefulWidget {
   final MiaRepository? mia;
   final AnuncioPremiado? anuncio;
   final EscolherArquivo? escolherArquivo;
+  final CompartilhamentoRepository? compartilhamentos;
   final FotoPerfilRepository? fotoPerfil;
   final EscolherFoto? escolherFoto;
   final AjustarFoto? ajustarFoto;
@@ -68,6 +70,7 @@ class MedTrackApp extends StatefulWidget {
     this.mia,
     this.anuncio,
     this.escolherArquivo,
+    this.compartilhamentos,
     this.fotoPerfil,
     this.escolherFoto,
     this.ajustarFoto,
@@ -85,6 +88,8 @@ class _MedTrackAppState extends State<MedTrackApp> {
   );
   final _mudancas = Mudancas();
   late final _mia = widget.mia ?? MiaRepository(widget.api);
+  late final _compartilhamentos =
+      widget.compartilhamentos ?? CompartilhamentoRepository(widget.api);
   late final AnuncioPremiado _anuncio =
       widget.anuncio ?? const AnuncioSimulado();
   late final _fotoPerfil = FotoPerfilController(
@@ -109,6 +114,7 @@ class _MedTrackAppState extends State<MedTrackApp> {
         Provider.value(value: widget.tratamentos),
         Provider.value(value: widget.doses),
         Provider.value(value: _mia),
+        Provider.value(value: _compartilhamentos),
         Provider.value(value: _anuncio),
         Provider<EscolherArquivo>.value(
           value: widget.escolherArquivo ?? escolherArquivoDoAparelho,

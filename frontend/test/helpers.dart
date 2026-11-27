@@ -12,6 +12,8 @@ import 'package:frontend/features/auth/dados_cadastro.dart';
 import 'package:frontend/features/auth/widgets/campo_codigo.dart';
 import 'package:frontend/features/auth/sessao_controller.dart';
 import 'package:frontend/features/auth/usuario.dart';
+import 'package:frontend/features/compartilhamento/compartilhamento.dart';
+import 'package:frontend/features/compartilhamento/compartilhamento_repository.dart';
 import 'package:frontend/features/doses/dose.dart';
 import 'package:frontend/features/doses/dose_repository.dart';
 import 'package:frontend/features/mia/anuncio_premiado.dart';
@@ -28,6 +30,12 @@ import 'package:frontend/features/tratamentos/tratamento_repository.dart';
 import 'package:frontend/main.dart';
 
 const maria = Usuario(id: 1, nome: 'Maria', email: 'm@m.com');
+const draAna = Usuario(
+  id: 2,
+  nome: 'Dra. Ana',
+  email: 'ana@m.com',
+  ehProfissional: true,
+);
 
 /// Substitui o armazenamento seguro, que não existe no ambiente de testes.
 class StorageMemoria extends SessionStorage {
@@ -345,6 +353,104 @@ class FotoPerfilFake extends FotoPerfilRepository {
   }
 }
 
+/// Compartilhamentos falsos, para os dois lados (paciente e profissional).
+class CompartilhamentoFake extends CompartilhamentoRepository {
+  // Paciente
+  List<CompartilhamentoDoPaciente> doPaciente;
+  List<PedidoDeAcesso> pedidos;
+  String codigo = 'cod-abc123';
+  final codigosGerados = <int>[];
+  final decisoes = <({int id, bool aprovar})>[];
+  final revogados = <int>[];
+
+  // Profissional
+  List<TratamentoDePaciente> doProfissional;
+  Map<int, DetalheCompartilhado> detalhes;
+  final codigosUsados = <String>[];
+  ApiException? erroUsar;
+
+  CompartilhamentoFake({
+    this.doPaciente = const [],
+    this.pedidos = const [],
+    this.doProfissional = const [],
+    this.detalhes = const {},
+  }) : super(ApiClient());
+
+  @override
+  Future<String> gerarCodigo(int tratamentoId) async {
+    codigosGerados.add(tratamentoId);
+    return codigo;
+  }
+
+  @override
+  Future<List<CompartilhamentoDoPaciente>> listarDoPaciente() async =>
+      doPaciente;
+
+  @override
+  Future<List<PedidoDeAcesso>> pedidosPendentes() async => pedidos;
+
+  @override
+  Future<void> decidir(int compartilhamentoId, {required bool aprovar}) async {
+    decisoes.add((id: compartilhamentoId, aprovar: aprovar));
+    pedidos = [
+      for (final p in pedidos)
+        if (p.compartilhamentoId != compartilhamentoId) p,
+    ];
+    doPaciente = [
+      for (final c in doPaciente)
+        c.id != compartilhamentoId
+            ? c
+            : CompartilhamentoDoPaciente(
+                id: c.id,
+                tratamentoId: c.tratamentoId,
+                medicamento: c.medicamento,
+                profissional: c.profissional,
+                status: aprovar
+                    ? StatusCompartilhamento.ativo
+                    : StatusCompartilhamento.recusado,
+              ),
+    ];
+  }
+
+  @override
+  Future<void> revogar(int compartilhamentoId) async {
+    revogados.add(compartilhamentoId);
+    doPaciente = [
+      for (final c in doPaciente)
+        c.id != compartilhamentoId
+            ? c
+            : CompartilhamentoDoPaciente(
+                id: c.id,
+                tratamentoId: c.tratamentoId,
+                medicamento: c.medicamento,
+                profissional: c.profissional,
+                status: StatusCompartilhamento.revogado,
+              ),
+    ];
+  }
+
+  @override
+  Future<void> usarCodigo(String codigo) async {
+    if (erroUsar != null) throw erroUsar!;
+    codigosUsados.add(codigo.trim());
+  }
+
+  @override
+  Future<List<TratamentoDePaciente>> listarDoProfissional() async =>
+      doProfissional;
+
+  @override
+  Future<DetalheCompartilhado> buscar(int compartilhamentoId) async =>
+      detalhes[compartilhamentoId]!;
+}
+
+const profissionalAna = ProfissionalResumo(
+  nome: 'Dra. Ana',
+  profissao: 'Médico(a)',
+  registro: 'CRM 12345',
+  uf: 'PB',
+);
+
 /// PNG de 1x1 pixel, para fotos de teste que a tela consegue mostrar.
 final pngDeTeste = base64Decode(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8'
@@ -387,10 +493,13 @@ String tokenFalso({required DateTime expiraEm}) {
       '${parte({'usuario_id': 1, 'exp': exp})}.assinatura';
 }
 
-StorageMemoria storageComSessao(DateTime expiraEm) => StorageMemoria((
-      token: tokenFalso(expiraEm: expiraEm),
-      usuario: maria.toJson(),
-    ));
+StorageMemoria storageComSessao(
+  DateTime expiraEm, {
+  Usuario usuario = maria,
+}) => StorageMemoria((
+  token: tokenFalso(expiraEm: expiraEm),
+  usuario: usuario.toJson(),
+));
 
 /// Monta o app de verdade (rotas + providers), trocando só o backend e o armazenamento.
 Future<SessaoController> abrirApp(
@@ -406,6 +515,7 @@ Future<SessaoController> abrirApp(
   FotoPerfilRepository? fotoPerfil,
   EscolherFoto? escolherFoto,
   AjustarFoto? ajustarFoto,
+  CompartilhamentoRepository? compartilhamentos,
   String rota = Rotas.splash,
 }) async {
   final apiUsada = api ?? ApiClient();
@@ -431,6 +541,7 @@ Future<SessaoController> abrirApp(
       escolherFoto: escolherFoto ?? ({required camera}) async => null,
       // Por padrão, "ajustar" devolve a foto como veio (sem abrir a tela).
       ajustarFoto: ajustarFoto ?? (context, foto) async => foto,
+      compartilhamentos: compartilhamentos ?? CompartilhamentoFake(),
       rotaInicial: rota,
     ),
   );

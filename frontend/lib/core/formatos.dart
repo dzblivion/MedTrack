@@ -61,9 +61,11 @@ String formatarMesAno(DateTime data) {
 
 /// "hoje", "amanhã" ou "sábado, 28/11".
 String descreverDia(DateTime dia, DateTime agora) {
-  final dias = DateTime.utc(dia.year, dia.month, dia.day)
-      .difference(DateTime.utc(agora.year, agora.month, agora.day))
-      .inDays;
+  final dias = DateTime.utc(
+    dia.year,
+    dia.month,
+    dia.day,
+  ).difference(DateTime.utc(agora.year, agora.month, agora.day)).inDays;
   return switch (dias) {
     0 => 'hoje',
     1 => 'amanhã',
@@ -75,6 +77,22 @@ String descreverDia(DateTime dia, DateTime agora) {
 String descreverQuando(DateTime quando, DateTime agora) =>
     '${descreverDia(quando, agora)} às '
     '${_doisDigitos(quando.hour)}:${_doisDigitos(quando.minute)}';
+
+/// "Hoje – quinta, 19/11", "Ontem – ...", "Anteontem – ..." ou só a data.
+String rotuloDoDia(DateTime dia, DateTime agora) {
+  final diferenca = DateTime.utc(
+    agora.year,
+    agora.month,
+    agora.day,
+  ).difference(DateTime.utc(dia.year, dia.month, dia.day)).inDays;
+  final data = '${diaDaSemana(dia)}, ${formatarDiaMes(dia)}';
+  return switch (diferenca) {
+    0 => 'Hoje – $data',
+    1 => 'Ontem – $data',
+    2 => 'Anteontem – $data',
+    _ => data,
+  };
+}
 
 bool mesmoDia(DateTime a, DateTime b) =>
     a.year == b.year && a.month == b.month && a.day == b.day;

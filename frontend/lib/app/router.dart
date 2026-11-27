@@ -4,6 +4,13 @@ import 'package:provider/provider.dart';
 
 import '../core/mudancas.dart';
 import '../features/auth/cadastro_screen.dart';
+import '../features/compartilhamento/adicionar_paciente_screen.dart';
+import '../features/compartilhamento/compartilhamento_repository.dart';
+import '../features/compartilhamento/compartilhamentos_screen.dart';
+import '../features/compartilhamento/pacientes_controller.dart';
+import '../features/compartilhamento/pacientes_screen.dart';
+import '../features/compartilhamento/pedidos_controller.dart';
+import '../features/compartilhamento/tratamento_de_paciente_screen.dart';
 import '../features/auth/confirmar_cadastro_screen.dart';
 import '../features/auth/dados_cadastro.dart';
 import '../features/auth/login_screen.dart';
@@ -146,33 +153,81 @@ GoRouter criarRouter(
         path: Rotas.plus,
         builder: (context, state) => const PlusScreen(),
       ),
+      GoRoute(
+        path: Rotas.compartilhamentos,
+        builder: (context, state) => const CompartilhamentosScreen(),
+      ),
+      // Telas do profissional, por cima do menu.
+      GoRoute(
+        path: Rotas.adicionarPaciente,
+        builder: (context, state) => const AdicionarPacienteScreen(),
+      ),
+      GoRoute(
+        path: '/pacientes/:id',
+        redirect: (context, state) =>
+            _idDaRota(state) == null ? Rotas.inicio : null,
+        builder: (context, state) =>
+            TratamentoDePacienteScreen(compartilhamentoId: _idDaRota(state)!),
+      ),
       StatefulShellRoute.indexedStack(
-        // Home e Histórico ficam acima do menu para o menu poder recarregá-los
-        // ao abrir a aba (ex.: depois de cadastrar um tratamento). O
-        // Histórico só é criado (e busca os dados) quando aberto.
-        builder: (context, state, navegacao) => MultiProvider(
-          providers: [
-            ChangeNotifierProvider(
-              create: (context) => HomeController(
-                context.read<DoseRepository>(),
-                mudancas: context.read<Mudancas>(),
-              )..carregar(),
-            ),
-            ChangeNotifierProvider(
-              create: (context) => HistoricoController(
-                context.read<DoseRepository>(),
-                mudancas: context.read<Mudancas>(),
+        // Os controllers das abas ficam acima do menu para o menu poder
+        // recarregá-los ao abrir a aba (ex.: depois de cadastrar um
+        // tratamento). O Histórico só busca os dados quando aberto. Cada um
+        // só carrega para o tipo de conta que o usa.
+        builder: (context, state, navegacao) {
+          final profissional = sessao.usuario?.ehProfissional == true;
+          return MultiProvider(
+            providers: [
+              ChangeNotifierProvider(
+                create: (context) {
+                  final home = HomeController(
+                    context.read<DoseRepository>(),
+                    mudancas: context.read<Mudancas>(),
+                  );
+                  if (!profissional) home.carregar();
+                  return home;
+                },
               ),
-            ),
-          ],
-          child: AppShell(navegacao: navegacao),
-        ),
+              ChangeNotifierProvider(
+                create: (context) => HistoricoController(
+                  context.read<DoseRepository>(),
+                  mudancas: context.read<Mudancas>(),
+                ),
+              ),
+              ChangeNotifierProvider(
+                create: (context) {
+                  final pedidos = PedidosController(
+                    context.read<CompartilhamentoRepository>(),
+                    mudancas: context.read<Mudancas>(),
+                  );
+                  if (!profissional) pedidos.carregar();
+                  return pedidos;
+                },
+              ),
+              ChangeNotifierProvider(
+                create: (context) {
+                  final pacientes = PacientesController(
+                    context.read<CompartilhamentoRepository>(),
+                  );
+                  if (profissional) pacientes.carregar();
+                  return pacientes;
+                },
+              ),
+            ],
+            child: AppShell(navegacao: navegacao, profissional: profissional),
+          );
+        },
         branches: [
           StatefulShellBranch(
             routes: [
+              // O profissional não tem tratamentos próprios: o Início dele
+              // é a lista de pacientes.
               GoRoute(
                 path: Rotas.inicio,
-                builder: (context, state) => const HomeScreen(),
+                builder: (context, state) =>
+                    sessao.usuario?.ehProfissional == true
+                    ? const PacientesScreen()
+                    : const HomeScreen(),
               ),
             ],
           ),
@@ -215,8 +270,9 @@ GoRouter criarRouter(
                             ..filtrar(_idDaRota(state))
                             ..carregar(),
                       child: HistoricoTratamentoScreen(
-                        medicamento:
-                            state.extra is String ? state.extra as String : null,
+                        medicamento: state.extra is String
+                            ? state.extra as String
+                            : null,
                       ),
                     ),
                   ),

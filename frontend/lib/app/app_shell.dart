@@ -2,41 +2,62 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../features/compartilhamento/pacientes_controller.dart';
+import '../features/compartilhamento/pedidos_controller.dart';
 import '../features/historico/historico_controller.dart';
 import '../features/home/home_controller.dart';
 import '../theme/app_theme.dart';
+
+typedef _Item = ({IconData icone, String rotulo, int aba});
 
 /// Estrutura do app logado: a aba aberta + o menu inferior do protótipo.
 class AppShell extends StatelessWidget {
   final StatefulNavigationShell navegacao;
 
-  const AppShell({super.key, required this.navegacao});
+  /// O profissional só tem "Pacientes" (no lugar do Início) e "Perfil".
+  final bool profissional;
 
-  static const _itens = [
-    (icone: Icons.home_outlined, rotulo: 'Início'),
-    (icone: Icons.medication_outlined, rotulo: 'Tratamentos'),
-    (icone: Icons.assignment_outlined, rotulo: 'Histórico'),
-    (icone: Icons.account_circle_outlined, rotulo: 'Perfil'),
-  ];
+  const AppShell({
+    super.key,
+    required this.navegacao,
+    this.profissional = false,
+  });
 
   static const _inicio = 0;
   static const _historico = 2;
+  static const _perfil = 3;
 
-  void _abrir(BuildContext context, int indice) {
-    // Abrir o Início ou o Histórico sempre traz as doses atualizadas
+  static const List<_Item> _itensPaciente = [
+    (icone: Icons.home_outlined, rotulo: 'Início', aba: _inicio),
+    (icone: Icons.medication_outlined, rotulo: 'Tratamentos', aba: 1),
+    (icone: Icons.assignment_outlined, rotulo: 'Histórico', aba: _historico),
+    (icone: Icons.account_circle_outlined, rotulo: 'Perfil', aba: _perfil),
+  ];
+
+  static const List<_Item> _itensProfissional = [
+    (icone: Icons.groups_outlined, rotulo: 'Pacientes', aba: _inicio),
+    (icone: Icons.account_circle_outlined, rotulo: 'Perfil', aba: _perfil),
+  ];
+
+  void _abrir(BuildContext context, int aba) {
+    // Abrir o Início ou o Histórico sempre traz os dados atualizados
     // (ex.: uma dose marcada numa aba aparece na outra).
-    if (indice == _inicio) context.read<HomeController>().carregar();
-    if (indice == _historico) context.read<HistoricoController>().carregar();
+    if (aba == _inicio && profissional) {
+      context.read<PacientesController>().carregar();
+    } else if (aba == _inicio) {
+      context.read<HomeController>().carregar();
+      context.read<PedidosController>().carregar();
+    }
+    if (aba == _historico) context.read<HistoricoController>().carregar();
 
     // Tocar na aba já aberta volta para o começo dela.
-    navegacao.goBranch(
-      indice,
-      initialLocation: indice == navegacao.currentIndex,
-    );
+    navegacao.goBranch(aba, initialLocation: aba == navegacao.currentIndex);
   }
 
   @override
   Widget build(BuildContext context) {
+    final itens = profissional ? _itensProfissional : _itensPaciente;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: navegacao,
@@ -50,13 +71,13 @@ class AppShell extends StatelessWidget {
           ),
           child: Row(
             children: [
-              for (var i = 0; i < _itens.length; i++)
+              for (final item in itens)
                 Expanded(
                   child: _ItemMenu(
-                    icone: _itens[i].icone,
-                    rotulo: _itens[i].rotulo,
-                    ativo: i == navegacao.currentIndex,
-                    onTap: () => _abrir(context, i),
+                    icone: item.icone,
+                    rotulo: item.rotulo,
+                    ativo: item.aba == navegacao.currentIndex,
+                    onTap: () => _abrir(context, item.aba),
                   ),
                 ),
             ],
