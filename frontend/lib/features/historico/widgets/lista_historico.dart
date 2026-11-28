@@ -6,6 +6,7 @@ import '../../../core/formatos.dart';
 import '../../../theme/app_theme.dart';
 import '../../../widgets/app_snackbar.dart';
 import '../../doses/dose.dart';
+import '../../lembretes/lembretes_controller.dart';
 import '../historico_controller.dart';
 import 'grupo_dia.dart';
 import 'seletor_mes.dart';
@@ -105,6 +106,9 @@ class ListaHistorico extends StatelessWidget {
     try {
       await controller.registrar(dose, tomada: tomada);
       onRegistrou?.call();
+      if (context.mounted) {
+        context.read<LembretesController>().doseRegistrada(dose);
+      }
       if (context.mounted) {
         AppSnackBar.info(
           context,

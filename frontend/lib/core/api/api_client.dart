@@ -15,8 +15,14 @@ class ApiException implements Exception {
 }
 
 class ApiClient {
+  /// Endereço escolhido ao rodar/compilar, ex.:
+  /// `flutter run --dart-define=API_URL=http://localhost:5000` (celular
+  /// pelo cabo, com `adb reverse`) ou o endereço do servidor na nuvem.
+  static const _apiUrl = String.fromEnvironment('API_URL');
+
   // 10.0.2.2 é como o emulador Android enxerga o localhost do computador.
   static String get baseUrl {
+    if (_apiUrl.isNotEmpty) return _apiUrl;
     if (kIsWeb) return 'http://localhost:5000';
     if (defaultTargetPlatform == TargetPlatform.android) {
       return 'http://10.0.2.2:5000';

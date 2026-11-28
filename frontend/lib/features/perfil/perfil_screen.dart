@@ -150,17 +150,19 @@ class PerfilScreen extends StatelessWidget {
             _DadoPessoal(icone: Icons.alternate_email, texto: email),
             const _Titulo('Configurações'),
             // Só pacientes compartilham tratamentos.
-            if (usuario?.ehProfissional != true)
+            // Só o paciente tem tratamentos para compartilhar e lembrar.
+            if (usuario?.ehProfissional != true) ...[
               _ItemConfiguracao(
                 titulo: 'Compartilhamentos',
                 descricao: 'Profissionais que acompanham seus tratamentos',
                 onTap: () => context.push(Rotas.compartilhamentos),
               ),
-            _ItemConfiguracao(
-              titulo: 'Notificações',
-              descricao: 'Gerencie seus lembretes de medicamentos',
-              onTap: () => _emBreve(context),
-            ),
+              _ItemConfiguracao(
+                titulo: 'Notificações',
+                descricao: 'Gerencie seus lembretes de medicamentos',
+                onTap: () => context.push(Rotas.notificacoes),
+              ),
+            ],
             _ItemConfiguracao(
               titulo: 'Alterar senha',
               descricao: 'Atualize a senha da sua conta',

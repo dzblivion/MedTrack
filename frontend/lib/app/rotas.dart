@@ -30,6 +30,8 @@ abstract final class Rotas {
   static const adicionarPaciente = '/pacientes/adicionar';
   static String tratamentoDePaciente(int compartilhamentoId) =>
       '/pacientes/$compartilhamentoId';
+  /// Lembretes das doses (Perfil → Notificações).
+  static const notificacoes = '/notificacoes';
   static const termos = '/termos';
   static const privacidade = '/privacidade';
 }

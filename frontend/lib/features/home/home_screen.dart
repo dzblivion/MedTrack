@@ -10,6 +10,7 @@ import '../../widgets/botao_cabecalho.dart';
 import '../../widgets/cabecalho_usuario.dart';
 import '../auth/sessao_controller.dart';
 import '../doses/dose.dart';
+import '../lembretes/lembretes_controller.dart';
 import '../compartilhamento/pedidos_controller.dart';
 import 'home_controller.dart';
 import 'widgets/aviso_pedidos.dart';
@@ -138,6 +139,9 @@ class HomeScreen extends StatelessWidget {
   }) async {
     try {
       await controller.registrar(dose, tomada: tomada);
+      if (context.mounted) {
+        context.read<LembretesController>().doseRegistrada(dose);
+      }
       if (context.mounted) {
         AppSnackBar.info(
           context,

@@ -24,6 +24,7 @@ import '../features/historico/historico_controller.dart';
 import '../features/historico/historico_screen.dart';
 import '../features/historico/historico_tratamento_screen.dart';
 import '../features/home/home_screen.dart';
+import '../features/lembretes/notificacoes_screen.dart';
 import '../features/mia/digitalizar_prescricao_screen.dart';
 import '../features/mia/medicamento_lido.dart';
 import '../features/mia/plus_screen.dart';
@@ -156,6 +157,10 @@ GoRouter criarRouter(
       GoRoute(
         path: Rotas.compartilhamentos,
         builder: (context, state) => const CompartilhamentosScreen(),
+      ),
+      GoRoute(
+        path: Rotas.notificacoes,
+        builder: (context, state) => const NotificacoesScreen(),
       ),
       // Telas do profissional, por cima do menu.
       GoRoute(

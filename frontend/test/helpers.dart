@@ -16,6 +16,8 @@ import 'package:frontend/features/compartilhamento/compartilhamento.dart';
 import 'package:frontend/features/compartilhamento/compartilhamento_repository.dart';
 import 'package:frontend/features/doses/dose.dart';
 import 'package:frontend/features/doses/dose_repository.dart';
+import 'package:frontend/features/lembretes/notificador.dart';
+import 'package:frontend/features/lembretes/preferencias_lembretes.dart';
 import 'package:frontend/features/mia/anuncio_premiado.dart';
 import 'package:frontend/features/mia/digitalizar_prescricao_screen.dart';
 import 'package:frontend/features/mia/medicamento_lido.dart';
@@ -245,6 +247,12 @@ class DoseFake extends DoseRepository {
     return [for (final d in doses) if (d.tratamentoId == tratamento.id) d];
   }
 
+  @override
+  Future<List<Dose>> proximas(DateTime agora) async => [
+    for (final d in doses)
+      if (d.pendente && d.agendadaPara.isAfter(agora)) d,
+  ]..sort((a, b) => a.agendadaPara.compareTo(b.agendadaPara));
+
   /// O histórico usa a mesma lista, da mais recente para a mais antiga.
   @override
   Future<List<Dose>> todas() async {
@@ -451,6 +459,75 @@ const profissionalAna = ProfissionalResumo(
   uf: 'PB',
 );
 
+/// Notificações falsas: guarda o que foi agendado e mostrado.
+class NotificadorFake implements Notificador {
+  @override
+  bool agendaNoAparelho;
+  bool permite;
+  bool? estadoPermissao;
+  int pedidos = 0;
+  final agendados =
+      <int, ({DateTime quando, String titulo, String texto, String? dados})>{};
+  final mostradas = <String>[];
+
+  NotificadorFake({this.agendaNoAparelho = true, this.permite = true});
+
+  @override
+  Future<void> iniciar() async {}
+
+  @override
+  Future<bool> pedirPermissao() async {
+    pedidos++;
+    estadoPermissao = permite;
+    return permite;
+  }
+
+  @override
+  Future<bool?> permitido() async => estadoPermissao;
+
+  @override
+  Future<void> agendar({
+    required int id,
+    required DateTime quando,
+    required String titulo,
+    required String texto,
+    String? dados,
+  }) async => agendados[id] = (
+    quando: quando,
+    titulo: titulo,
+    texto: texto,
+    dados: dados,
+  );
+
+  @override
+  Future<void> mostrarAgora({
+    required String titulo,
+    required String texto,
+  }) async => mostradas.add(texto);
+
+  @override
+  Future<void> cancelar(int id) async => agendados.remove(id);
+
+  @override
+  Future<void> cancelarTodos() async => agendados.clear();
+}
+
+/// Preferências dos lembretes em memória.
+class ArmazenamentoLembretesFake extends ArmazenamentoLembretes {
+  PreferenciasLembretes salvas;
+
+  ArmazenamentoLembretesFake([
+    this.salvas = const PreferenciasLembretes(),
+  ]);
+
+  @override
+  Future<PreferenciasLembretes> ler() async => salvas;
+
+  @override
+  Future<void> salvar(PreferenciasLembretes preferencias) async =>
+      salvas = preferencias;
+}
+
 /// PNG de 1x1 pixel, para fotos de teste que a tela consegue mostrar.
 final pngDeTeste = base64Decode(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8'
@@ -516,6 +593,8 @@ Future<SessaoController> abrirApp(
   EscolherFoto? escolherFoto,
   AjustarFoto? ajustarFoto,
   CompartilhamentoRepository? compartilhamentos,
+  Notificador? notificador,
+  ArmazenamentoLembretes? armazenamentoLembretes,
   String rota = Rotas.splash,
 }) async {
   final apiUsada = api ?? ApiClient();
@@ -542,6 +621,9 @@ Future<SessaoController> abrirApp(
       // Por padrão, "ajustar" devolve a foto como veio (sem abrir a tela).
       ajustarFoto: ajustarFoto ?? (context, foto) async => foto,
       compartilhamentos: compartilhamentos ?? CompartilhamentoFake(),
+      notificador: notificador ?? NotificadorFake(),
+      armazenamentoLembretes:
+          armazenamentoLembretes ?? ArmazenamentoLembretesFake(),
       rotaInicial: rota,
     ),
   );

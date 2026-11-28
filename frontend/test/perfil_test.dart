@@ -46,12 +46,10 @@ void main() {
     expect(find.text('Dados pessoais'), findsOneWidget);
   });
 
-  testWidgets('Editar perfil e Notificações ainda mostram "Em breve"', (
-    tester,
-  ) async {
+  testWidgets('Editar perfil ainda mostra "Em breve"', (tester) async {
     await abrirPerfil(tester);
 
-    await tocar(tester, 'Notificações');
+    await tocar(tester, 'Editar perfil');
     expect(find.text('Em breve.'), findsOneWidget);
   });
 

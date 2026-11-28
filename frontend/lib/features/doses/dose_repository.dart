@@ -32,6 +32,16 @@ class DoseRepository {
     return doses..sort((a, b) => b.agendadaPara.compareTo(a.agendadaPara));
   }
 
+  /// Doses pendentes de agora em diante dos tratamentos ativos, da mais
+  /// próxima para a mais distante (para os lembretes).
+  Future<List<Dose>> proximas(DateTime agora) async {
+    final doses = await _dosesDos((t) => t.status == StatusTratamento.ativo);
+    return [
+      for (final dose in doses)
+        if (dose.pendente && dose.agendadaPara.isAfter(agora)) dose,
+    ]..sort((a, b) => a.agendadaPara.compareTo(b.agendadaPara));
+  }
+
   /// Horário da próxima dose pendente do tratamento (nulo se não houver).
   /// O backend não cria doses em horários que já passaram, então logo
   /// depois do cadastro esta é a primeira dose.

@@ -13,6 +13,10 @@ import 'features/auth/auth_repository.dart';
 import 'features/auth/sessao_controller.dart';
 import 'features/compartilhamento/compartilhamento_repository.dart';
 import 'features/doses/dose_repository.dart';
+import 'features/lembretes/lembretes_controller.dart';
+import 'features/lembretes/notificador.dart';
+import 'features/lembretes/preferencias_lembretes.dart';
+import 'features/lembretes/segundo_plano.dart';
 import 'features/mia/anuncio_premiado.dart';
 import 'features/mia/digitalizar_prescricao_screen.dart';
 import 'features/mia/mia_repository.dart';
@@ -58,6 +62,8 @@ class MedTrackApp extends StatefulWidget {
   final FotoPerfilRepository? fotoPerfil;
   final EscolherFoto? escolherFoto;
   final AjustarFoto? ajustarFoto;
+  final Notificador? notificador;
+  final ArmazenamentoLembretes? armazenamentoLembretes;
   final String rotaInicial;
 
   const MedTrackApp({
@@ -74,6 +80,8 @@ class MedTrackApp extends StatefulWidget {
     this.fotoPerfil,
     this.escolherFoto,
     this.ajustarFoto,
+    this.notificador,
+    this.armazenamentoLembretes,
     this.rotaInicial = Rotas.splash,
   });
 
@@ -96,10 +104,34 @@ class _MedTrackAppState extends State<MedTrackApp> {
     widget.fotoPerfil ?? FotoPerfilRepository(widget.api),
     widget.sessao,
   );
+  late final _lembretes = LembretesController(
+    widget.notificador ?? NotificadorLocal(),
+    widget.armazenamentoLembretes ?? ArmazenamentoLembretes(),
+    widget.doses,
+    widget.sessao,
+    mudancas: _mudancas,
+  )..iniciar();
+
+  /// Ao voltar para o app, refaz os lembretes (podem ter surgido doses).
+  late final AppLifecycleListener _ciclo;
+
+  @override
+  void initState() {
+    super.initState();
+    _ciclo = AppLifecycleListener(onResume: _lembretes.appVoltou);
+    // Dose marcada pelos botões da notificação: Início e Histórico
+    // atualizam. (Só com as notificações de verdade; os testes usam falsas.)
+    if (widget.notificador == null) {
+      ouvirDosesRegistradas(_mudancas.tratamentosMudaram);
+    }
+  }
 
   @override
   void dispose() {
+    _ciclo.dispose();
+    if (widget.notificador == null) pararDeOuvirDosesRegistradas();
     _router.dispose();
+    _lembretes.dispose();
     _mudancas.dispose();
     _fotoPerfil.dispose();
     super.dispose();
@@ -126,6 +158,7 @@ class _MedTrackAppState extends State<MedTrackApp> {
           value: widget.ajustarFoto ?? ajustarFotoNaTela,
         ),
         ChangeNotifierProvider.value(value: _fotoPerfil),
+        ChangeNotifierProvider.value(value: _lembretes),
         // As telas só leem (read) e escutam por conta própria, então o
         // aviso não redesenha o app inteiro.
         ChangeNotifierProvider.value(value: _mudancas),
