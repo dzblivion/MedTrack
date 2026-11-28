@@ -17,8 +17,6 @@ enum _OpcaoFoto { camera, galeria, remover }
 class PerfilScreen extends StatelessWidget {
   const PerfilScreen({super.key});
 
-  void _emBreve(BuildContext context) => AppSnackBar.info(context, 'Em breve.');
-
   /// Menu da foto: tirar, escolher da galeria ou remover.
   Future<void> _trocarFoto(BuildContext context) async {
     final fotos = context.read<FotoPerfilController>();
@@ -123,7 +121,7 @@ class PerfilScreen extends StatelessWidget {
               subtitulo: email,
               onTocarAvatar: () => _trocarFoto(context),
               acao: FilledButton(
-                onPressed: () => _emBreve(context),
+                onPressed: () => context.push(Rotas.editarPerfil),
                 style: FilledButton.styleFrom(
                   backgroundColor: AppColors.ciano,
                   elevation: 6,
@@ -149,7 +147,6 @@ class PerfilScreen extends StatelessWidget {
             _DadoPessoal(icone: Icons.person_outline, texto: nome),
             _DadoPessoal(icone: Icons.alternate_email, texto: email),
             const _Titulo('Configurações'),
-            // Só pacientes compartilham tratamentos.
             // Só o paciente tem tratamentos para compartilhar e lembrar.
             if (usuario?.ehProfissional != true) ...[
               _ItemConfiguracao(

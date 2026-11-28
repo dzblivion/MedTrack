@@ -46,13 +46,6 @@ void main() {
     expect(find.text('Dados pessoais'), findsOneWidget);
   });
 
-  testWidgets('Editar perfil ainda mostra "Em breve"', (tester) async {
-    await abrirPerfil(tester);
-
-    await tocar(tester, 'Editar perfil');
-    expect(find.text('Em breve.'), findsOneWidget);
-  });
-
   testWidgets('Alterar senha usa o código por e-mail e volta ao Perfil', (
     tester,
   ) async {

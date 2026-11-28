@@ -23,6 +23,7 @@ import 'package:frontend/features/mia/digitalizar_prescricao_screen.dart';
 import 'package:frontend/features/mia/medicamento_lido.dart';
 import 'package:frontend/features/mia/mia_repository.dart';
 import 'package:frontend/features/perfil/ajustar_foto_screen.dart';
+import 'package:frontend/features/perfil/conta_repository.dart';
 import 'package:frontend/features/perfil/escolher_foto.dart';
 import 'package:frontend/features/perfil/foto_perfil_repository.dart';
 import 'package:frontend/features/tratamentos/dados_tratamento.dart';
@@ -528,6 +529,31 @@ class ArmazenamentoLembretesFake extends ArmazenamentoLembretes {
       salvas = preferencias;
 }
 
+/// Conta falsa: troca o nome e "exclui" se a senha for [senhaCerta].
+class ContaFake extends ContaRepository {
+  String senhaCerta;
+  ApiException? erroNome;
+  final nomesSalvos = <String>[];
+  int exclusoes = 0;
+
+  ContaFake({this.senhaCerta = 'senha123'}) : super(ApiClient());
+
+  @override
+  Future<String> alterarNome(String nome) async {
+    if (erroNome != null) throw erroNome!;
+    nomesSalvos.add(nome);
+    return nome.trim();
+  }
+
+  @override
+  Future<void> excluir(String senha) async {
+    if (senha != senhaCerta) {
+      throw const ApiException('Senha incorreta!', 403);
+    }
+    exclusoes++;
+  }
+}
+
 /// PNG de 1x1 pixel, para fotos de teste que a tela consegue mostrar.
 final pngDeTeste = base64Decode(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8'
@@ -593,6 +619,7 @@ Future<SessaoController> abrirApp(
   EscolherFoto? escolherFoto,
   AjustarFoto? ajustarFoto,
   CompartilhamentoRepository? compartilhamentos,
+  ContaRepository? conta,
   Notificador? notificador,
   ArmazenamentoLembretes? armazenamentoLembretes,
   String rota = Rotas.splash,
@@ -621,6 +648,7 @@ Future<SessaoController> abrirApp(
       // Por padrão, "ajustar" devolve a foto como veio (sem abrir a tela).
       ajustarFoto: ajustarFoto ?? (context, foto) async => foto,
       compartilhamentos: compartilhamentos ?? CompartilhamentoFake(),
+      conta: conta ?? ContaFake(),
       notificador: notificador ?? NotificadorFake(),
       armazenamentoLembretes:
           armazenamentoLembretes ?? ArmazenamentoLembretesFake(),

@@ -46,6 +46,22 @@ class SessaoController extends ChangeNotifier {
     _ativar(login.token, login.usuario);
   }
 
+  /// Depois de trocar o nome no Perfil: atualiza a tela e o que fica salvo
+  /// no aparelho (para continuar certo ao reabrir o app).
+  Future<void> atualizarNome(String nome) async {
+    final atual = _usuario;
+    final token = _api.token;
+    if (atual == null || token == null) return;
+    _usuario = Usuario(
+      id: atual.id,
+      nome: nome,
+      email: atual.email,
+      ehProfissional: atual.ehProfissional,
+    );
+    notifyListeners();
+    await _storage.salvar(token, _usuario!.toJson());
+  }
+
   Future<void> sair() async {
     _api.token = null;
     _usuario = null;

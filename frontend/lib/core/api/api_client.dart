@@ -55,7 +55,11 @@ class ApiClient {
   Future<Map<String, dynamic>> patch(String path, Map<String, dynamic> body) =>
       _enviar('PATCH', path, body: body);
 
-  Future<Map<String, dynamic>> delete(String path) => _enviar('DELETE', path);
+  /// [body] para quando a exclusão pede confirmação (ex.: a senha).
+  Future<Map<String, dynamic>> delete(
+    String path, [
+    Map<String, dynamic>? body,
+  ]) => _enviar('DELETE', path, body: body);
 
   /// Envia um arquivo (ex.: foto da receita) como formulário multipart.
   /// [espera] é maior que o padrão porque o processamento pode demorar.

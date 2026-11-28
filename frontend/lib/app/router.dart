@@ -29,6 +29,7 @@ import '../features/mia/digitalizar_prescricao_screen.dart';
 import '../features/mia/medicamento_lido.dart';
 import '../features/mia/plus_screen.dart';
 import '../features/mia/resultado_mia_screen.dart';
+import '../features/perfil/editar_perfil_screen.dart';
 import '../features/perfil/perfil_screen.dart';
 import '../features/perfil/texto_legal_screen.dart';
 import '../features/perfil/textos_legais.dart';
@@ -157,6 +158,10 @@ GoRouter criarRouter(
       GoRoute(
         path: Rotas.compartilhamentos,
         builder: (context, state) => const CompartilhamentosScreen(),
+      ),
+      GoRoute(
+        path: Rotas.editarPerfil,
+        builder: (context, state) => const EditarPerfilScreen(),
       ),
       GoRoute(
         path: Rotas.notificacoes,
